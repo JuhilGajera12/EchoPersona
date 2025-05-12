@@ -166,7 +166,7 @@ const ProfileScreen = () => {
             style={styles.settingsButton}
             onPress={() => navigation.navigate('Settings')}>
             <Image
-              source={icons.premium}
+              source={icons.setting}
               style={styles.settingsIcon}
               tintColor={colors.navy}
               resizeMode="contain"
