@@ -1,7 +1,10 @@
 import React from 'react';
-import {NavigationContainer} from '@react-navigation/native';
-import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import { Provider } from 'react-redux';
+import { PersistGate } from 'redux-persist/integration/react';
+import { store, persistor } from './src/store';
+import { NavigationContainer } from '@react-navigation/native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import {
   StyleSheet,
   SafeAreaView,
@@ -10,15 +13,15 @@ import {
   Image,
 } from 'react-native';
 
-import DailyPromptScreen from './src/screens/DailyPromptScreen.tsx';
-import JournalScreen from './src/screens/JournalScreen.tsx';
-import ProfileScreen from './src/screens/ProfileScreen.tsx';
-import EvolutionScreen from './src/screens/EvolutionScreen.tsx';
-import PremiumScreen from './src/screens/PremiumScreen.tsx';
-import SettingsScreen from './src/screens/SettingsScreen.tsx';
-import {colors} from './src/constant/colors';
-import {icons} from './src/constant/icons.js';
-import {hp} from './src/helpers/globalFunction.js';
+import DailyPromptScreen from './src/screens/DailyPromptScreen';
+import JournalScreen from './src/screens/JournalScreen';
+import ProfileScreen from './src/screens/ProfileScreen';
+import EvolutionScreen from './src/screens/EvolutionScreen';
+import PremiumScreen from './src/screens/PremiumScreen';
+import SettingsScreen from './src/screens/SettingsScreen';
+import { colors } from './src/constant/colors';
+import { icons } from './src/constant/icons';
+import { hp } from './src/helpers/globalFunction';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -109,29 +112,33 @@ function TabNavigator() {
   );
 }
 
-function App() {
+const App = () => {
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle={'dark-content'} />
-      <NavigationContainer>
-        <Stack.Navigator>
-          <Stack.Screen
-            name="MainTabs"
-            component={TabNavigator}
-            options={{headerShown: false}}
-          />
-          <Stack.Screen
-            name="Settings"
-            component={SettingsScreen}
-            options={{
-              presentation: 'modal',
-            }}
-          />
-        </Stack.Navigator>
-      </NavigationContainer>
-    </SafeAreaView>
+    <Provider store={store}>
+      <PersistGate loading={null} persistor={persistor}>
+        <SafeAreaView style={styles.container}>
+          <StatusBar barStyle={'dark-content'} />
+          <NavigationContainer>
+            <Stack.Navigator>
+              <Stack.Screen
+                name="MainTabs"
+                component={TabNavigator}
+                options={{headerShown: false}}
+              />
+              <Stack.Screen
+                name="Settings"
+                component={SettingsScreen}
+                options={{
+                  presentation: 'modal',
+                }}
+              />
+            </Stack.Navigator>
+          </NavigationContainer>
+        </SafeAreaView>
+      </PersistGate>
+    </Provider>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {

@@ -10,11 +10,14 @@ import {
   Platform,
   Image,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useDispatch, useSelector} from 'react-redux';
 import {fontSize, hp, wp} from '../helpers/globalFunction';
 import {fonts} from '../constant/fonts';
 import {colors} from '../constant/colors';
 import {icons} from '../constant/icons';
+import {RootState} from '../store';
+import {setCurrentPrompt} from '../store/slices/promptSlice';
+import {addEntry} from '../store/slices/journalSlice';
 
 const SAMPLE_PROMPTS = [
   'What does growth mean to you today?',
@@ -25,9 +28,13 @@ const SAMPLE_PROMPTS = [
 ];
 
 const DailyPromptScreen = () => {
-  const [prompt, setPrompt] = useState('');
+  const dispatch = useDispatch();
   const [response, setResponse] = useState('');
   const [fadeAnim] = useState(new Animated.Value(0));
+
+  const currentPrompt = useSelector(
+    (state: RootState) => state.prompt.currentPrompt,
+  );
 
   useEffect(() => {
     loadPrompt();
@@ -36,55 +43,37 @@ const DailyPromptScreen = () => {
       duration: 1000,
       useNativeDriver: true,
     }).start();
-  }, []);
+  }, [fadeAnim]);
 
-  const loadPrompt = async () => {
-    try {
-      const savedPrompt = await AsyncStorage.getItem('currentPrompt');
-      if (savedPrompt) {
-        setPrompt(savedPrompt);
-      } else {
-        const randomPrompt =
-          SAMPLE_PROMPTS[Math.floor(Math.random() * SAMPLE_PROMPTS.length)];
-        setPrompt(randomPrompt);
-        await AsyncStorage.setItem('currentPrompt', randomPrompt);
-      }
-    } catch (error) {
-      console.error('Error loading prompt:', error);
-    }
-  };
-
-  const handleSave = async () => {
-    if (!response.trim()) return;
-
-    try {
-      const entry = {
-        prompt,
-        response,
-        timestamp: new Date().toISOString(),
-      };
-
-      const existingEntries = await AsyncStorage.getItem('journalEntries');
-      const entries = existingEntries ? JSON.parse(existingEntries) : [];
-      entries.unshift(entry);
-      await AsyncStorage.setItem('journalEntries', JSON.stringify(entries));
-
-      // Clear response and get new prompt
-      setResponse('');
+  const loadPrompt = () => {
+    if (!currentPrompt) {
       const randomPrompt =
         SAMPLE_PROMPTS[Math.floor(Math.random() * SAMPLE_PROMPTS.length)];
-      setPrompt(randomPrompt);
-      await AsyncStorage.setItem('currentPrompt', randomPrompt);
-    } catch (error) {
-      console.error('Error saving entry:', error);
+      dispatch(setCurrentPrompt(randomPrompt));
     }
   };
 
-  const handleSkip = async () => {
+  const handleSave = () => {
+    if (!response.trim() || !currentPrompt) return;
+
+    const entry = {
+      prompt: currentPrompt,
+      response,
+      timestamp: new Date().toISOString(),
+    };
+
+    dispatch(addEntry(entry));
+
+    setResponse('');
     const randomPrompt =
       SAMPLE_PROMPTS[Math.floor(Math.random() * SAMPLE_PROMPTS.length)];
-    setPrompt(randomPrompt);
-    await AsyncStorage.setItem('currentPrompt', randomPrompt);
+    dispatch(setCurrentPrompt(randomPrompt));
+  };
+
+  const handleSkip = () => {
+    const randomPrompt =
+      SAMPLE_PROMPTS[Math.floor(Math.random() * SAMPLE_PROMPTS.length)];
+    dispatch(setCurrentPrompt(randomPrompt));
   };
 
   return (
@@ -92,7 +81,7 @@ const DailyPromptScreen = () => {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}>
       <Animated.View style={[styles.promptCard, {opacity: fadeAnim}]}>
-        <Text style={styles.promptText}>{prompt}</Text>
+        <Text style={styles.promptText}>{currentPrompt}</Text>
       </Animated.View>
 
       <View style={styles.inputContainer}>

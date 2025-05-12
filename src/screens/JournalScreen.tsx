@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState} from 'react';
 import {
   View,
   Text,
@@ -9,11 +9,13 @@ import {
   TextInput,
   Image,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useDispatch, useSelector} from 'react-redux';
 import {colors} from '../constant/colors';
 import {fontSize, hp, wp} from '../helpers/globalFunction';
 import {fonts} from '../constant/fonts';
 import {icons} from '../constant/icons';
+import {RootState} from '../store';
+import {deleteEntry} from '../store/slices/journalSlice';
 
 interface JournalEntry {
   prompt: string;
@@ -22,25 +24,12 @@ interface JournalEntry {
 }
 
 const JournalScreen = () => {
-  const [entries, setEntries] = useState<JournalEntry[]>([]);
+  const dispatch = useDispatch();
   const [selectedEntry, setSelectedEntry] = useState<JournalEntry | null>(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  useEffect(() => {
-    loadEntries();
-  }, []);
-
-  const loadEntries = async () => {
-    try {
-      const savedEntries = await AsyncStorage.getItem('journalEntries');
-      if (savedEntries) {
-        setEntries(JSON.parse(savedEntries));
-      }
-    } catch (error) {
-      console.error('Error loading entries:', error);
-    }
-  };
+  const entries = useSelector((state: RootState) => state.journal.entries);
 
   const formatDate = (timestamp: string) => {
     const date = new Date(timestamp);
@@ -51,20 +40,9 @@ const JournalScreen = () => {
     });
   };
 
-  const handleDeleteEntry = async (timestamp: string) => {
-    try {
-      const updatedEntries = entries.filter(
-        entry => entry.timestamp !== timestamp,
-      );
-      await AsyncStorage.setItem(
-        'journalEntries',
-        JSON.stringify(updatedEntries),
-      );
-      setEntries(updatedEntries);
-      setIsModalVisible(false);
-    } catch (error) {
-      console.error('Error deleting entry:', error);
-    }
+  const handleDeleteEntry = (timestamp: string) => {
+    dispatch(deleteEntry(timestamp));
+    setIsModalVisible(false);
   };
 
   const filteredEntries = entries.filter(entry => {

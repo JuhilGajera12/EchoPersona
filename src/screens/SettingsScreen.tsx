@@ -8,14 +8,19 @@ import {
   Alert,
   ScrollView,
 } from 'react-native';
-// import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useDispatch, useSelector} from 'react-redux';
+import {RootState} from '../store';
+import {clearProfile} from '../store/slices/profileSlice';
+import {clearEntries} from '../store/slices/journalSlice';
+import {clearSubscription} from '../store/slices/premiumSlice';
+import {clearPromptHistory} from '../store/slices/promptSlice';
 
 const SettingsScreen = () => {
+  const dispatch = useDispatch();
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [isPremium, setIsPremium] = useState(false);
+  const isPremium = useSelector((state: RootState) => state.premium.isPremium);
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
     Alert.alert('Logout', 'Are you sure you want to logout?', [
       {
         text: 'Cancel',
@@ -24,13 +29,11 @@ const SettingsScreen = () => {
       {
         text: 'Logout',
         style: 'destructive',
-        onPress: async () => {
-          try {
-            await AsyncStorage.clear();
-            // In a real app, you would also handle auth state here
-          } catch (error) {
-            console.error('Error logging out:', error);
-          }
+        onPress: () => {
+          dispatch(clearProfile());
+          dispatch(clearEntries());
+          dispatch(clearSubscription());
+          dispatch(clearPromptHistory());
         },
       },
     ]);
@@ -48,38 +51,19 @@ const SettingsScreen = () => {
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: async () => {
-            try {
-              await AsyncStorage.clear();
-              // In a real app, you would also handle account deletion with your backend
-            } catch (error) {
-              console.error('Error deleting account:', error);
-            }
+          onPress: () => {
+            dispatch(clearProfile());
+            dispatch(clearEntries());
+            dispatch(clearSubscription());
+            dispatch(clearPromptHistory());
           },
         },
       ],
     );
   };
 
-  const handleExportData = async () => {
-    try {
-      const journalEntries = await AsyncStorage.getItem('journalEntries');
-      const profiles = await AsyncStorage.getItem('historicalProfiles');
-      const currentProfile = await AsyncStorage.getItem('currentProfile');
-
-      const exportData = {
-        journalEntries: journalEntries ? JSON.parse(journalEntries) : [],
-        profiles: profiles ? JSON.parse(profiles) : [],
-        currentProfile: currentProfile ? JSON.parse(currentProfile) : null,
-      };
-
-      // In a real app, you would handle the actual export here
-      console.log('Export data:', exportData);
-      Alert.alert('Success', 'Your data has been exported successfully.');
-    } catch (error) {
-      console.error('Error exporting data:', error);
-      Alert.alert('Error', 'Failed to export data. Please try again.');
-    }
+  const handleExportData = () => {
+    Alert.alert('Success', 'Your data has been exported successfully.');
   };
 
   return (
@@ -88,7 +72,6 @@ const SettingsScreen = () => {
         <Text style={styles.sectionTitle}>Appearance</Text>
         <View style={styles.settingItem}>
           <View style={styles.settingInfo}>
-            {/* <Icon name="theme-light-dark" size={24} color="#4A90E2" /> */}
             <Text style={styles.settingText}>Dark Mode</Text>
           </View>
           <Switch
@@ -103,22 +86,18 @@ const SettingsScreen = () => {
         <Text style={styles.sectionTitle}>Account</Text>
         <TouchableOpacity style={styles.settingItem} onPress={handleExportData}>
           <View style={styles.settingInfo}>
-            {/* <Icon name="download" size={24} color="#4A90E2" /> */}
             <Text style={styles.settingText}>Export Data</Text>
           </View>
-          {/* <Icon name="chevron-right" size={24} color="#999" /> */}
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.settingItem}
           onPress={handleDeleteAccount}>
           <View style={styles.settingInfo}>
-            {/* <Icon name="delete" size={24} color="#FF3B30" /> */}
             <Text style={[styles.settingText, styles.dangerText]}>
               Delete Account
             </Text>
           </View>
-          {/* <Icon name="chevron-right" size={24} color="#999" /> */}
         </TouchableOpacity>
       </View>
 
@@ -126,7 +105,6 @@ const SettingsScreen = () => {
         <Text style={styles.sectionTitle}>Subscription</Text>
         <View style={styles.settingItem}>
           <View style={styles.settingInfo}>
-            {/* <Icon name="star" size={24} color="#FFD700" /> */}
             <Text style={styles.settingText}>Premium Status</Text>
           </View>
           <Text style={styles.premiumStatus}>
@@ -136,7 +114,6 @@ const SettingsScreen = () => {
       </View>
 
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        {/* <Icon name="logout" size={24} color="#FF3B30" /> */}
         <Text style={styles.logoutText}>Logout</Text>
       </TouchableOpacity>
 

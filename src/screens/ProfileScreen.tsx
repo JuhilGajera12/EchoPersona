@@ -8,13 +8,18 @@ import {
   ActivityIndicator,
   Image,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useNavigation} from '@react-navigation/native';
+import {useDispatch, useSelector} from 'react-redux';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {fontSize, hp, wp} from '../helpers/globalFunction';
 import {colors} from '../constant/colors';
 import {fonts} from '../constant/fonts';
 import {icons} from '../constant/icons';
+import {RootState} from '../store';
+import {
+  setCurrentProfile,
+  addHistoricalProfile,
+} from '../store/slices/profileSlice';
 
 type RootStackParamList = {
   Settings: undefined;
@@ -30,39 +35,23 @@ interface PersonaProfile {
   lastUpdated: string;
 }
 
-interface HistoricalProfile {
-  summary: string;
-  traits: string[];
-  timestamp: string;
-}
-
 const ProfileScreen = () => {
   const navigation = useNavigation<NavigationProp>();
-  const [profile, setProfile] = useState<PersonaProfile | null>(null);
+  const dispatch = useDispatch();
   const [isLoading, setIsLoading] = useState(true);
-  const [isPremium, setIsPremium] = useState(false);
+
+  const profile = useSelector(
+    (state: RootState) => state.profile.currentProfile,
+  );
+  const isPremium = useSelector((state: RootState) => state.premium.isPremium);
 
   useEffect(() => {
     loadProfile();
-    checkPremiumStatus();
   }, []);
 
   const loadProfile = async () => {
     try {
-      const savedProfile = await AsyncStorage.getItem('currentProfile');
-      if (savedProfile) {
-        const parsedProfile = JSON.parse(savedProfile);
-        setProfile(parsedProfile);
-
-        // If this is the first time loading the profile, save it as historical
-        const hasHistoricalProfiles = await AsyncStorage.getItem(
-          'historicalProfiles',
-        );
-        if (!hasHistoricalProfiles) {
-          await saveHistoricalProfile(parsedProfile);
-        }
-      } else {
-        // Generate initial profile based on journal entries
+      if (!profile) {
         await generateProfile();
       }
     } catch (error) {
@@ -72,50 +61,8 @@ const ProfileScreen = () => {
     }
   };
 
-  const checkPremiumStatus = async () => {
-    try {
-      const premiumStatus = await AsyncStorage.getItem('isPremium');
-      setIsPremium(premiumStatus === 'true');
-    } catch (error) {
-      console.error('Error checking premium status:', error);
-    }
-  };
-
-  const saveHistoricalProfile = async (profile: PersonaProfile) => {
-    try {
-      const historicalProfile: HistoricalProfile = {
-        summary: profile.summary,
-        traits: profile.traits,
-        timestamp: profile.lastUpdated,
-      };
-
-      const existingProfiles = await AsyncStorage.getItem('historicalProfiles');
-      const profiles: HistoricalProfile[] = existingProfiles
-        ? JSON.parse(existingProfiles)
-        : [];
-
-      // Add new profile at the beginning of the array
-      profiles.unshift(historicalProfile);
-
-      // Keep only the last 10 profiles to prevent storage from growing too large
-      const trimmedProfiles = profiles.slice(0, 10);
-
-      await AsyncStorage.setItem(
-        'historicalProfiles',
-        JSON.stringify(trimmedProfiles),
-      );
-    } catch (error) {
-      console.error('Error saving historical profile:', error);
-    }
-  };
-
   const generateProfile = async () => {
     try {
-      const entries = await AsyncStorage.getItem('journalEntries');
-      if (!entries) return;
-
-      // This is a placeholder for the actual Gemini API integration
-      // In a real app, you would send the entries to Gemini and get a profile back
       const mockProfile: PersonaProfile = {
         summary:
           "You are a thoughtful and introspective individual who values personal growth and self-awareness. Your journal entries show a deep appreciation for life's meaningful moments and a desire to understand yourself better.",
@@ -129,11 +76,14 @@ const ProfileScreen = () => {
         lastUpdated: new Date().toISOString(),
       };
 
-      setProfile(mockProfile);
-      await AsyncStorage.setItem('currentProfile', JSON.stringify(mockProfile));
-
-      // Save this as a historical profile
-      await saveHistoricalProfile(mockProfile);
+      dispatch(setCurrentProfile(mockProfile));
+      dispatch(
+        addHistoricalProfile({
+          summary: mockProfile.summary,
+          traits: mockProfile.traits,
+          timestamp: mockProfile.lastUpdated,
+        }),
+      );
     } catch (error) {
       console.error('Error generating profile:', error);
     }
@@ -141,7 +91,6 @@ const ProfileScreen = () => {
 
   const handleRegenerateProfile = async () => {
     if (!isPremium) {
-      // Navigate to premium screen or show upgrade modal
       return;
     }
     setIsLoading(true);

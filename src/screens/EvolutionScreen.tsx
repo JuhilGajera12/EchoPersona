@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useRef} from 'react';
+import React, {useState, useEffect, useRef, useCallback} from 'react';
 import {
   View,
   Text,
@@ -9,9 +9,12 @@ import {
   Image,
   Animated,
   Modal,
+  Platform,
+  StatusBar,
+  FlatList,
 } from 'react-native';
-// import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useSelector} from 'react-redux';
+import {RootState} from '../store';
 import {wp, hp, fontSize} from '../helpers/globalFunction';
 import {colors} from '../constant/colors';
 import {fonts} from '../constant/fonts';
@@ -29,58 +32,37 @@ interface ComparisonResult {
 }
 
 const {width} = Dimensions.get('window');
-const TIMELINE_ITEM_WIDTH = width;
-const TIMELINE_SPACING = wp(2.13);
+const TIMELINE_ITEM_WIDTH = wp(80);
+const TIMELINE_SPACING = wp(4);
 
 const EvolutionScreen = () => {
-  const [profiles, setProfiles] = useState<HistoricalProfile[]>([]);
+  const profiles = useSelector(
+    (state: RootState) => state.profile.historicalProfiles,
+  );
+  const isPremium = useSelector((state: RootState) => state.premium.isPremium);
   const [selectedProfile, setSelectedProfile] =
     useState<HistoricalProfile | null>(null);
-  const [isPremium, setIsPremium] = useState(false);
   const [showComparison, setShowComparison] = useState(false);
   const [comparisonResult, setComparisonResult] =
     useState<ComparisonResult | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const scrollX = useRef(new Animated.Value(0)).current;
+  const [currentIndex] = useState(0);
+  const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
-    loadProfiles();
-    checkPremiumStatus();
+    if (profiles.length > 0) {
+      setSelectedProfile(profiles[0]);
+      setTimeout(() => {
+        scrollViewRef.current?.scrollTo({x: 0, animated: true});
+      }, 100);
+    }
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 800,
       useNativeDriver: true,
     }).start();
-  }, []);
-
-  const loadProfiles = async () => {
-    try {
-      const savedProfiles = await AsyncStorage.getItem('historicalProfiles');
-      if (savedProfiles) {
-        const parsedProfiles = JSON.parse(savedProfiles);
-        setProfiles(parsedProfiles);
-        if (parsedProfiles.length > 0) {
-          setSelectedProfile(parsedProfiles[0]);
-          setTimeout(() => {
-            scrollViewRef.current?.scrollTo({x: 0, animated: true});
-          }, 100);
-        }
-      }
-    } catch (error) {
-      console.error('Error loading profiles:', error);
-    }
-  };
-
-  const checkPremiumStatus = async () => {
-    try {
-      const premiumStatus = await AsyncStorage.getItem('isPremium');
-      setIsPremium(premiumStatus === 'true');
-    } catch (error) {
-      console.error('Error checking premium status:', error);
-    }
-  };
+  }, [profiles, fadeAnim]);
 
   const formatDate = (timestamp: string) => {
     const date = new Date(timestamp);
@@ -93,17 +75,13 @@ const EvolutionScreen = () => {
 
   const handleCompare = async () => {
     if (!isPremium) {
-      // Navigate to premium screen or show upgrade modal
       return;
     }
 
-    if (profiles.length < 2) return;
+    if (profiles.length < 2) {
+      return;
+    }
 
-    const currentProfile = profiles[0];
-    const previousProfile = selectedProfile;
-
-    // This is a placeholder for the actual Gemini API integration
-    // In a real app, you would send both profiles to Gemini for comparison
     const mockComparison: ComparisonResult = {
       changes: [
         'More focused on personal growth',
@@ -118,143 +96,114 @@ const EvolutionScreen = () => {
     setShowComparison(true);
   };
 
-  const handleScroll = Animated.event(
-    [{nativeEvent: {contentOffset: {x: scrollX}}}],
-    {
-      useNativeDriver: false,
-      listener: (event: any) => {
-        const offsetX = event.nativeEvent.contentOffset.x;
-        const index = Math.round(
-          offsetX / (TIMELINE_ITEM_WIDTH + TIMELINE_SPACING),
-        );
-        if (index !== currentIndex && index >= 0 && index < profiles.length) {
-          setCurrentIndex(index);
-          setSelectedProfile(profiles[index]);
-        }
-      },
-    },
-  );
-
   const scrollToIndex = (index: number) => {
     if (index >= 0 && index < profiles.length) {
-      scrollViewRef.current?.scrollTo({
-        x: index * (TIMELINE_ITEM_WIDTH + TIMELINE_SPACING),
+      flatListRef.current?.scrollToIndex({
+        index,
         animated: true,
+        viewPosition: 0.5,
       });
-      setCurrentIndex(index);
-      setSelectedProfile(profiles[index]);
     }
   };
 
-  const renderTimelineNode = (profile: HistoricalProfile, index: number) => {
-    const isSelected = currentIndex === index;
-    const inputRange = [
-      (index - 1) * (TIMELINE_ITEM_WIDTH + TIMELINE_SPACING),
-      index * (TIMELINE_ITEM_WIDTH + TIMELINE_SPACING),
-      (index + 1) * (TIMELINE_ITEM_WIDTH + TIMELINE_SPACING),
-    ];
-
-    const scale = scrollX.interpolate({
-      inputRange,
-      outputRange: [0.8, 1.2, 0.8],
-      extrapolate: 'clamp',
-    });
-
-    const opacity = scrollX.interpolate({
-      inputRange,
-      outputRange: [0.5, 1, 0.5],
-      extrapolate: 'clamp',
-    });
-
-    return (
+  const renderTimelineItem = useCallback(
+    ({item, index}: {item: HistoricalProfile; index: number}) => (
       <TouchableOpacity
-        key={profile.timestamp}
-        style={[styles.timelineItem, {width: TIMELINE_ITEM_WIDTH}]}
+        style={[
+          styles.timelineNode,
+          index === currentIndex && styles.timelineNodeActive,
+        ]}
         onPress={() => scrollToIndex(index)}>
-        <View style={styles.timelineNode}>
-          <Animated.View
-            style={[
-              styles.timelineDot,
-              {
-                transform: [{scale}],
-                opacity,
-              },
-            ]}
-          />
-          {index < profiles.length - 1 && (
-            <Animated.View
-              style={[
-                styles.timelineLine,
-                {
-                  opacity,
-                },
-              ]}
-            />
-          )}
+        <View style={styles.timelineNodeContent}>
+          <View style={styles.timelineDot} />
+          <Text style={styles.timelineDate}>{formatDate(item.timestamp)}</Text>
+          <Text style={styles.timelineSummary} numberOfLines={2}>
+            {item.summary}
+          </Text>
         </View>
-        <Animated.Text
-          style={[
-            styles.timelineDate,
-            {
-              opacity,
-              transform: [{scale}],
-            },
-          ]}>
-          {formatDate(profile.timestamp)}
-        </Animated.Text>
       </TouchableOpacity>
-    );
-  };
+    ),
+    [currentIndex, scrollToIndex],
+  );
+
+  const keyExtractor = useCallback(
+    (item: HistoricalProfile) => item.timestamp,
+    [],
+  );
 
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor={colors.white} />
+
       <Animated.View style={[styles.header, {opacity: fadeAnim}]}>
-        <Text style={styles.title}>Your Evolution</Text>
-        <Text style={styles.subtitle}>Track your personal growth journey</Text>
+        <View style={styles.headerContent}>
+          <Image
+            source={icons.evolution}
+            style={styles.headerIcon}
+            tintColor={colors.teal}
+            resizeMode="contain"
+          />
+          <Text style={styles.title}>Your Evolution</Text>
+          <Text style={styles.subtitle}>
+            Track your personal growth journey
+          </Text>
+        </View>
       </Animated.View>
 
-      <View style={styles.timelineWrapper}>
-        <ScrollView
-          ref={scrollViewRef}
+      <View style={styles.timelineSection}>
+        <FlatList
+          ref={flatListRef}
+          data={profiles}
+          renderItem={renderTimelineItem}
+          keyExtractor={keyExtractor}
           horizontal
-          pagingEnabled
           showsHorizontalScrollIndicator={false}
-          style={styles.timelineContainer}
+          pagingEnabled
+          snapToAlignment="center"
           contentContainerStyle={styles.timelineContent}
-          onScroll={handleScroll}
-          scrollEventThrottle={16}
-          decelerationRate="fast"
-          snapToInterval={TIMELINE_ITEM_WIDTH + TIMELINE_SPACING}
-          snapToAlignment="center">
-          {profiles.map(renderTimelineNode)}
-        </ScrollView>
+          removeClippedSubviews={true}
+        />
       </View>
 
       {selectedProfile ? (
         <Animated.ScrollView
           style={[styles.profileContainer, {opacity: fadeAnim}]}
-          showsVerticalScrollIndicator={false}>
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.profileContent}>
           <View style={styles.profileCard}>
             <View style={styles.profileHeader}>
-              <Image
-                source={icons.user}
-                style={styles.profileIcon}
-                tintColor={colors.teal}
-                resizeMode="contain"
-              />
-              <Text style={styles.profileDate}>
-                {formatDate(selectedProfile.timestamp)}
+              <View style={styles.profileIconContainer}>
+                <Image
+                  source={icons.user}
+                  style={styles.profileIcon}
+                  tintColor={colors.white}
+                  resizeMode="contain"
+                />
+              </View>
+              <View style={styles.profileHeaderText}>
+                <Text style={styles.profileDate}>
+                  {formatDate(selectedProfile.timestamp)}
+                </Text>
+                <Text style={styles.profileLabel}>Persona Profile</Text>
+              </View>
+            </View>
+
+            <View style={styles.summarySection}>
+              <Text style={styles.sectionTitle}>Summary</Text>
+              <Text style={styles.profileSummary}>
+                {selectedProfile.summary}
               </Text>
             </View>
 
-            <Text style={styles.profileSummary}>{selectedProfile.summary}</Text>
-
-            <View style={styles.traitsContainer}>
-              {selectedProfile.traits.map((trait, index) => (
-                <View key={index} style={styles.traitBadge}>
-                  <Text style={styles.traitText}>{trait}</Text>
-                </View>
-              ))}
+            <View style={styles.traitsSection}>
+              <Text style={styles.sectionTitle}>Key Traits</Text>
+              <View style={styles.traitsContainer}>
+                {selectedProfile.traits.map((trait, index) => (
+                  <View key={index} style={styles.traitBadge}>
+                    <Text style={styles.traitText}>{trait}</Text>
+                  </View>
+                ))}
+              </View>
             </View>
 
             {isPremium && profiles.length > 1 && (
@@ -264,7 +213,7 @@ const EvolutionScreen = () => {
                 <Image
                   source={icons.compare}
                   style={styles.compareIcon}
-                  tintColor={colors.teal}
+                  tintColor={colors.white}
                   resizeMode="contain"
                 />
                 <Text style={styles.compareButtonText}>Compare with Today</Text>
@@ -273,17 +222,18 @@ const EvolutionScreen = () => {
           </View>
         </Animated.ScrollView>
       ) : (
-        <View style={styles.emptyState}>
+        <Animated.View style={[styles.emptyState, {opacity: fadeAnim}]}>
           <Image
             source={icons.evolution}
             style={styles.emptyStateIcon}
             tintColor={colors.teal}
             resizeMode="contain"
           />
+          <Text style={styles.emptyStateTitle}>No Profiles Yet</Text>
           <Text style={styles.emptyStateText}>
             Your evolution timeline will appear here as you continue journaling
           </Text>
-        </View>
+        </Animated.View>
       )}
 
       <Modal
@@ -308,24 +258,31 @@ const EvolutionScreen = () => {
             </View>
 
             {comparisonResult && (
-              <>
-                <Text style={styles.insightsText}>
-                  {comparisonResult.insights}
-                </Text>
+              <ScrollView style={styles.modalScroll}>
+                <View style={styles.insightsSection}>
+                  <Text style={styles.insightsTitle}>Key Insights</Text>
+                  <Text style={styles.insightsText}>
+                    {comparisonResult.insights}
+                  </Text>
+                </View>
 
-                <Text style={styles.changesTitle}>Key Changes:</Text>
-                {comparisonResult.changes.map((change, index) => (
-                  <View key={index} style={styles.changeItem}>
-                    <Image
-                      source={icons.add}
-                      style={styles.changeIcon}
-                      tintColor={colors.teal}
-                      resizeMode="contain"
-                    />
-                    <Text style={styles.changeText}>{change}</Text>
-                  </View>
-                ))}
-              </>
+                <View style={styles.changesSection}>
+                  <Text style={styles.changesTitle}>Notable Changes</Text>
+                  {comparisonResult.changes.map((change, index) => (
+                    <View key={index} style={styles.changeItem}>
+                      <View style={styles.changeIconContainer}>
+                        <Image
+                          source={icons.add}
+                          style={styles.changeIcon}
+                          tintColor={colors.white}
+                          resizeMode="contain"
+                        />
+                      </View>
+                      <Text style={styles.changeText}>{change}</Text>
+                    </View>
+                  ))}
+                </View>
+              </ScrollView>
             )}
           </View>
         </View>
@@ -340,24 +297,37 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
   },
   header: {
-    padding: wp(5.33),
     backgroundColor: colors.white,
+    paddingTop: Platform.OS === 'ios' ? hp(6) : hp(4),
+    paddingBottom: hp(4),
+    borderBottomWidth: 1,
+    borderBottomColor: colors.lightGray,
+  },
+  headerContent: {
+    alignItems: 'center',
+    paddingHorizontal: wp(6),
+  },
+  headerIcon: {
+    width: wp(12),
+    height: wp(12),
+    marginBottom: hp(2),
   },
   title: {
-    fontSize: fontSize(28),
-    fontFamily: fonts.bold,
+    fontSize: fontSize(32),
+    fontFamily: fonts.black,
     color: colors.navy,
-    marginBottom: hp(0.5),
+    marginBottom: hp(1),
   },
   subtitle: {
     fontSize: fontSize(16),
     fontFamily: fonts.regular,
     color: colors.navy,
     opacity: 0.7,
+    textAlign: 'center',
   },
-  timelineWrapper: {
-    height: hp(12),
+  timelineSection: {
     backgroundColor: colors.white,
+    paddingVertical: hp(2),
     borderBottomWidth: 1,
     borderBottomColor: colors.lightGray,
   },
@@ -366,46 +336,13 @@ const styles = StyleSheet.create({
   },
   timelineContent: {
     paddingHorizontal: (width - TIMELINE_ITEM_WIDTH) / 2,
-    alignItems: 'center',
-  },
-  timelineItem: {
-    alignItems: 'center',
-    paddingTop: hp(2),
-    marginHorizontal: TIMELINE_SPACING / 2,
   },
   timelineNode: {
-    alignItems: 'center',
-    position: 'relative',
-  },
-  timelineDot: {
-    width: wp(4.26),
-    height: wp(4.26),
-    borderRadius: wp(2.13),
-    backgroundColor: colors.teal,
-    opacity: 0.5,
-  },
-  timelineLine: {
-    position: 'absolute',
-    top: wp(2.13),
     width: TIMELINE_ITEM_WIDTH,
-    height: 2,
-    backgroundColor: colors.navy,
-  },
-  timelineDate: {
-    marginTop: hp(1),
-    fontSize: fontSize(14),
-    fontFamily: fonts.regular,
-    color: colors.navy,
-    opacity: 0.7,
-  },
-  profileContainer: {
-    flex: 1,
-    padding: wp(5.33),
-  },
-  profileCard: {
+    marginHorizontal: TIMELINE_SPACING / 2,
     backgroundColor: colors.white,
-    borderRadius: wp(3.2),
-    padding: wp(5.33),
+    borderRadius: wp(4),
+    padding: wp(4),
     shadowColor: colors.black,
     shadowOffset: {
       width: 0,
@@ -413,103 +350,184 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 3,
+    elevation: 2,
+  },
+  timelineNodeActive: {
+    backgroundColor: colors.teal,
+  },
+  timelineNodeContent: {
+    alignItems: 'center',
+  },
+  timelineDot: {
+    width: wp(3),
+    height: wp(3),
+    borderRadius: wp(1.5),
+    backgroundColor: colors.navy,
+    marginBottom: hp(1),
+  },
+  timelineDate: {
+    fontSize: fontSize(14),
+    fontFamily: fonts.bold,
+    color: colors.navy,
+    marginBottom: hp(1),
+  },
+  timelineSummary: {
+    fontSize: fontSize(14),
+    fontFamily: fonts.regular,
+    color: colors.navy,
+    opacity: 0.7,
+    textAlign: 'center',
+  },
+  profileContainer: {
+    flex: 1,
+  },
+  profileContent: {
+    padding: wp(6),
+  },
+  profileCard: {
+    backgroundColor: colors.white,
+    borderRadius: wp(4),
+    padding: wp(6),
+    shadowColor: colors.black,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   profileHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: hp(2),
+    marginBottom: hp(4),
+  },
+  profileIconContainer: {
+    width: wp(12),
+    height: wp(12),
+    borderRadius: wp(6),
+    backgroundColor: colors.teal,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: wp(4),
   },
   profileIcon: {
-    width: wp(6.4),
-    height: wp(6.4),
-    marginRight: wp(2.13),
+    width: wp(6),
+    height: wp(6),
+  },
+  profileHeaderText: {
+    flex: 1,
   },
   profileDate: {
-    fontSize: fontSize(16),
+    fontSize: fontSize(20),
     fontFamily: fonts.bold,
     color: colors.navy,
+    marginBottom: hp(0.5),
+  },
+  profileLabel: {
+    fontSize: fontSize(14),
+    fontFamily: fonts.regular,
+    color: colors.navy,
+    opacity: 0.7,
+  },
+  summarySection: {
+    marginBottom: hp(4),
+  },
+  sectionTitle: {
+    fontSize: fontSize(18),
+    fontFamily: fonts.bold,
+    color: colors.navy,
+    marginBottom: hp(2),
   },
   profileSummary: {
-    fontSize: fontSize(18),
+    fontSize: fontSize(16),
     lineHeight: hp(3),
     color: colors.navy,
     fontFamily: fonts.regular,
-    marginBottom: hp(2),
+  },
+  traitsSection: {
+    marginBottom: hp(4),
   },
   traitsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginHorizontal: -wp(1.066),
-    marginBottom: hp(2),
+    marginHorizontal: -wp(2),
   },
   traitBadge: {
     backgroundColor: colors.teal,
-    paddingHorizontal: wp(3.2),
-    paddingVertical: hp(0.5),
-    borderRadius: hp(1.97),
-    margin: wp(1.066),
+    paddingHorizontal: wp(4),
+    paddingVertical: hp(1),
+    borderRadius: hp(2),
+    margin: wp(2),
   },
   traitText: {
-    color: colors.beige,
-    fontSize: fontSize(16),
+    color: colors.white,
+    fontSize: fontSize(14),
     fontFamily: fonts.bold,
   },
   compareButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.lightGray,
-    padding: wp(4.26),
-    borderRadius: wp(2.13),
+    backgroundColor: colors.teal,
+    padding: wp(4),
+    borderRadius: wp(3),
     marginTop: hp(2),
   },
   compareIcon: {
-    width: wp(5.33),
-    height: wp(5.33),
-    marginRight: wp(2.13),
+    width: wp(5),
+    height: wp(5),
+    marginRight: wp(2),
   },
   compareButtonText: {
-    fontSize: fontSize(18),
+    fontSize: fontSize(16),
     fontFamily: fonts.bold,
-    color: colors.teal,
+    color: colors.white,
   },
   emptyState: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: wp(5.33),
+    padding: wp(6),
   },
   emptyStateIcon: {
-    width: wp(21.33),
-    height: wp(21.33),
-    marginBottom: hp(2),
+    width: wp(24),
+    height: wp(24),
+    marginBottom: hp(4),
     opacity: 0.5,
   },
+  emptyStateTitle: {
+    fontSize: fontSize(24),
+    fontFamily: fonts.bold,
+    color: colors.navy,
+    marginBottom: hp(2),
+  },
   emptyStateText: {
-    fontSize: fontSize(18),
+    fontSize: fontSize(16),
     fontFamily: fonts.regular,
     color: colors.navy,
     textAlign: 'center',
     opacity: 0.7,
+    lineHeight: hp(2.5),
   },
   modalContainer: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    padding: wp(5.33),
+    justifyContent: 'flex-end',
   },
   modalContent: {
     backgroundColor: colors.white,
-    borderRadius: wp(3.2),
-    padding: wp(5.33),
-    maxHeight: '80%',
+    borderTopLeftRadius: wp(6),
+    borderTopRightRadius: wp(6),
+    maxHeight: '90%',
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: hp(2),
+    padding: wp(6),
+    borderBottomWidth: 1,
+    borderBottomColor: colors.lightGray,
   },
   modalTitle: {
     fontSize: fontSize(24),
@@ -517,40 +535,63 @@ const styles = StyleSheet.create({
     color: colors.navy,
   },
   closeButton: {
-    padding: wp(2.13),
+    padding: wp(2),
   },
   closeIcon: {
-    width: wp(5.33),
-    height: wp(5.33),
+    width: wp(5),
+    height: wp(5),
+  },
+  modalScroll: {
+    padding: wp(6),
+  },
+  insightsSection: {
+    marginBottom: hp(4),
+  },
+  insightsTitle: {
+    fontSize: fontSize(20),
+    fontFamily: fonts.bold,
+    color: colors.navy,
+    marginBottom: hp(2),
   },
   insightsText: {
-    fontSize: fontSize(18),
+    fontSize: fontSize(16),
     fontFamily: fonts.regular,
     color: colors.navy,
-    lineHeight: hp(3),
-    marginBottom: hp(2),
+    lineHeight: hp(2.5),
+  },
+  changesSection: {
+    marginBottom: hp(4),
   },
   changesTitle: {
     fontSize: fontSize(20),
     fontFamily: fonts.bold,
     color: colors.navy,
-    marginBottom: hp(1),
+    marginBottom: hp(2),
   },
   changeItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: hp(1),
+    marginBottom: hp(2),
+  },
+  changeIconContainer: {
+    width: wp(8),
+    height: wp(8),
+    borderRadius: wp(4),
+    backgroundColor: colors.teal,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: wp(3),
   },
   changeIcon: {
-    width: wp(4.26),
-    height: wp(4.26),
-    marginRight: wp(2.13),
+    width: wp(4),
+    height: wp(4),
   },
   changeText: {
+    flex: 1,
     fontSize: fontSize(16),
     fontFamily: fonts.regular,
     color: colors.navy,
-    flex: 1,
+    lineHeight: hp(2.5),
   },
 });
 

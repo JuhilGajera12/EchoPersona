@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState} from 'react';
 import {
   View,
   Text,
@@ -12,16 +12,13 @@ import {
   ActivityIndicator,
   ViewStyle,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useDispatch, useSelector} from 'react-redux';
+import {RootState} from '../store';
+import {setPremiumStatus} from '../store/slices/premiumSlice';
 import {icons} from '../constant/icons';
 import {colors} from '../constant/colors';
 import {fontSize, hp, wp} from '../helpers/globalFunction';
 import {fonts} from '../constant/fonts';
-
-// Stripe integration
-const STRIPE_PUBLISHABLE_KEY = 'your_publishable_key'; // Replace with your Stripe key
-const MONTHLY_PRICE_ID = 'price_monthly_id'; // Replace with your Stripe price ID
-const YEARLY_PRICE_ID = 'price_yearly_id'; // Replace with your Stripe price ID
 
 interface PremiumFeature {
   icon: any;
@@ -92,7 +89,8 @@ const FREE_FEATURES: PremiumFeature[] = [
 ];
 
 const PremiumScreen = () => {
-  const [isPremium, setIsPremium] = useState(false);
+  const dispatch = useDispatch();
+  const isPremium = useSelector((state: RootState) => state.premium.isPremium);
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>(
     'monthly',
   );
@@ -100,51 +98,19 @@ const PremiumScreen = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    checkPremiumStatus();
-  }, []);
-
-  const checkPremiumStatus = async () => {
-    try {
-      const premiumStatus = await AsyncStorage.getItem('isPremium');
-      setIsPremium(premiumStatus === 'true');
-    } catch (error) {
-      console.error('Error checking premium status:', error);
-    }
-  };
-
   const handleUpgrade = async () => {
     try {
       setIsLoading(true);
       setError(null);
 
-      // In a real app, this would integrate with Stripe
-      // Example Stripe integration:
-      /*
-      const response = await fetch('your_backend_url/create-checkout-session', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          priceId: selectedPlan === 'monthly' ? MONTHLY_PRICE_ID : YEARLY_PRICE_ID,
-          successUrl: 'echopersona://premium/success',
-          cancelUrl: 'echopersona://premium/cancel',
-        }),
-      });
+      // await stripe.initPaymentSheet({
+      //   paymentIntentClientSecret: sessionId,
+      //   merchantDisplayName: 'EchoPersona',
+      // });
+      // await stripe.presentPaymentSheet();
 
-      const { sessionId } = await response.json();
-      await stripe.initPaymentSheet({
-        paymentIntentClientSecret: sessionId,
-        merchantDisplayName: 'EchoPersona',
-      });
-      await stripe.presentPaymentSheet();
-      */
-
-      // For now, simulate successful payment
       await new Promise(resolve => setTimeout(resolve, 1500));
-      await AsyncStorage.setItem('isPremium', 'true');
-      setIsPremium(true);
+      dispatch(setPremiumStatus(true));
     } catch (error) {
       setError('Payment failed. Please try again.');
       console.error('Error upgrading to premium:', error);
@@ -155,8 +121,6 @@ const PremiumScreen = () => {
 
   const handleExportData = async () => {
     try {
-      // In a real app, this would generate and download a data export
-      // For now, we'll just show a message
       console.log('Exporting data...');
     } catch (error) {
       console.error('Error exporting data:', error);
@@ -205,7 +169,6 @@ const PremiumScreen = () => {
           </View>
 
           <ScrollView style={styles.modalScroll}>
-            {/* Free Plan */}
             <View style={styles.planCard}>
               <View style={styles.planHeader}>
                 <Text style={styles.planName}>Free</Text>
@@ -226,7 +189,6 @@ const PremiumScreen = () => {
               </View>
             </View>
 
-            {/* Premium Plan */}
             <View style={[styles.planCard, styles.premiumPlanCard]}>
               <View style={styles.premiumBadge}>
                 <Text style={styles.premiumBadgeText}>BEST VALUE</Text>
@@ -321,7 +283,6 @@ const PremiumScreen = () => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         bounces={false}>
-        {/* Header Section */}
         <View style={styles.header}>
           <View style={styles.headerContent}>
             <Image
@@ -337,7 +298,6 @@ const PremiumScreen = () => {
           </View>
         </View>
 
-        {/* Subscription Status */}
         {isPremium && (
           <View style={styles.statusCard}>
             <Text style={styles.statusTitle}>Premium Active</Text>
@@ -352,7 +312,6 @@ const PremiumScreen = () => {
           </View>
         )}
 
-        {/* Features Section */}
         <View style={styles.featuresSection}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Premium Features</Text>
@@ -367,20 +326,17 @@ const PremiumScreen = () => {
           </View>
         </View>
 
-        {/* Error Message */}
         {error && (
           <View style={styles.errorContainer}>
             <Text style={styles.errorText}>{error}</Text>
           </View>
         )}
 
-        {/* Terms */}
         <Text style={styles.terms}>
           By upgrading, you agree to our Terms of Service and Privacy Policy
         </Text>
       </ScrollView>
 
-      {/* Comparison Modal */}
       {renderComparisonModal()}
     </View>
   );
