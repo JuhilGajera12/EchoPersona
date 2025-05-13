@@ -15,4 +15,5 @@ export const icons = {
   voice: require('../../assets/images/voice.png'),
   setting: require('../../assets/images/setting.png'),
   close: require('../../assets/images/close.png'),
+  calendar: require('../../assets/images/calendar.png'),
 };

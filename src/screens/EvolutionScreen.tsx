@@ -5,20 +5,26 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Dimensions,
   Image,
-  Animated,
-  Modal,
   Platform,
   StatusBar,
+  Animated,
   FlatList,
+  Dimensions,
+  Modal,
 } from 'react-native';
 import {useSelector} from 'react-redux';
 import {RootState} from '../store';
-import {wp, hp, fontSize} from '../helpers/globalFunction';
 import {colors} from '../constant/colors';
 import {fonts} from '../constant/fonts';
 import {icons} from '../constant/icons';
+import {fontSize, hp, wp} from '../helpers/globalFunction';
+
+const STATUS_BAR_HEIGHT =
+  Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0;
+const {width} = Dimensions.get('window');
+const TIMELINE_ITEM_WIDTH = wp(80);
+const TIMELINE_SPACING = wp(4);
 
 interface HistoricalProfile {
   summary: string;
@@ -30,10 +36,6 @@ interface ComparisonResult {
   changes: string[];
   insights: string;
 }
-
-const {width} = Dimensions.get('window');
-const TIMELINE_ITEM_WIDTH = wp(80);
-const TIMELINE_SPACING = wp(4);
 
 const EvolutionScreen = () => {
   const profiles = useSelector(
@@ -47,6 +49,7 @@ const EvolutionScreen = () => {
     useState<ComparisonResult | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(50)).current;
   const [currentIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
 
@@ -57,12 +60,19 @@ const EvolutionScreen = () => {
         scrollViewRef.current?.scrollTo({x: 0, animated: true});
       }, 100);
     }
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 800,
-      useNativeDriver: true,
-    }).start();
-  }, [profiles, fadeAnim]);
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [profiles, fadeAnim, slideAnim]);
 
   const formatDate = (timestamp: string) => {
     const date = new Date(timestamp);
@@ -135,18 +145,29 @@ const EvolutionScreen = () => {
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.white} />
 
-      <Animated.View style={[styles.header, {opacity: fadeAnim}]}>
+      <Animated.View
+        style={[
+          styles.header,
+          {
+            opacity: fadeAnim,
+            transform: [{translateY: slideAnim}],
+          },
+        ]}>
         <View style={styles.headerContent}>
-          <Image
-            source={icons.evolution}
-            style={styles.headerIcon}
-            tintColor={colors.teal}
-            resizeMode="contain"
-          />
-          <Text style={styles.title}>Your Evolution</Text>
-          <Text style={styles.subtitle}>
-            Track your personal growth journey
-          </Text>
+          <View style={styles.headerTop}>
+            <View style={styles.headerTextContainer}>
+              <Text style={styles.title}>Your Evolution</Text>
+              <Text style={styles.subtitle}>
+                Track your personal growth journey
+              </Text>
+            </View>
+            <Image
+              source={icons.evolution}
+              style={styles.headerIcon}
+              tintColor={colors.gold}
+              resizeMode="contain"
+            />
+          </View>
         </View>
       </Animated.View>
 
@@ -206,17 +227,22 @@ const EvolutionScreen = () => {
               </View>
             </View>
 
-            {isPremium && profiles.length > 1 && (
+            {isPremium && (
               <TouchableOpacity
                 style={styles.compareButton}
-                onPress={handleCompare}>
-                <Image
-                  source={icons.compare}
-                  style={styles.compareIcon}
-                  tintColor={colors.white}
-                  resizeMode="contain"
-                />
-                <Text style={styles.compareButtonText}>Compare with Today</Text>
+                onPress={handleCompare}
+                activeOpacity={0.8}>
+                <View style={styles.compareButtonContent}>
+                  <Image
+                    source={icons.compare}
+                    style={styles.compareIcon}
+                    tintColor={colors.white}
+                    resizeMode="contain"
+                  />
+                  <Text style={styles.compareButtonText}>
+                    Compare with Today
+                  </Text>
+                </View>
               </TouchableOpacity>
             )}
           </View>
@@ -226,7 +252,7 @@ const EvolutionScreen = () => {
           <Image
             source={icons.evolution}
             style={styles.emptyStateIcon}
-            tintColor={colors.teal}
+            tintColor={colors.gold}
             resizeMode="contain"
           />
           <Text style={styles.emptyStateTitle}>No Profiles Yet</Text>
@@ -251,7 +277,7 @@ const EvolutionScreen = () => {
                 <Image
                   source={icons.close}
                   style={styles.closeIcon}
-                  tintColor={colors.navy}
+                  tintColor={colors.black}
                   resizeMode="contain"
                 />
               </TouchableOpacity>
@@ -298,32 +324,37 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: colors.white,
-    paddingTop: Platform.OS === 'ios' ? hp(6) : hp(4),
-    paddingBottom: hp(4),
+    paddingTop: Platform.OS === 'ios' ? hp(6) : STATUS_BAR_HEIGHT + hp(2),
+    paddingBottom: hp(3),
     borderBottomWidth: 1,
     borderBottomColor: colors.lightGray,
   },
   headerContent: {
-    alignItems: 'center',
     paddingHorizontal: wp(6),
+  },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  headerTextContainer: {
+    flex: 1,
   },
   headerIcon: {
     width: wp(12),
     height: wp(12),
-    marginBottom: hp(2),
+    marginLeft: wp(4),
   },
   title: {
     fontSize: fontSize(32),
-    fontFamily: fonts.black,
-    color: colors.navy,
+    fontFamily: fonts.bold,
+    color: colors.black,
     marginBottom: hp(1),
   },
   subtitle: {
     fontSize: fontSize(16),
     fontFamily: fonts.regular,
-    color: colors.navy,
-    opacity: 0.7,
-    textAlign: 'center',
+    color: colors.sand,
   },
   timelineSection: {
     backgroundColor: colors.white,
@@ -331,11 +362,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.lightGray,
   },
-  timelineContainer: {
-    flexGrow: 0,
-  },
   timelineContent: {
-    paddingHorizontal: (width - TIMELINE_ITEM_WIDTH) / 2,
+    paddingHorizontal: wp(6),
   },
   timelineNode: {
     width: TIMELINE_ITEM_WIDTH,
@@ -353,7 +381,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   timelineNodeActive: {
-    backgroundColor: colors.teal,
+    backgroundColor: colors.gold,
   },
   timelineNodeContent: {
     alignItems: 'center',
@@ -362,19 +390,19 @@ const styles = StyleSheet.create({
     width: wp(3),
     height: wp(3),
     borderRadius: wp(1.5),
-    backgroundColor: colors.navy,
+    backgroundColor: colors.black,
     marginBottom: hp(1),
   },
   timelineDate: {
     fontSize: fontSize(14),
     fontFamily: fonts.bold,
-    color: colors.navy,
+    color: colors.black,
     marginBottom: hp(1),
   },
   timelineSummary: {
     fontSize: fontSize(14),
     fontFamily: fonts.regular,
-    color: colors.navy,
+    color: colors.black,
     opacity: 0.7,
     textAlign: 'center',
   },
@@ -406,7 +434,7 @@ const styles = StyleSheet.create({
     width: wp(12),
     height: wp(12),
     borderRadius: wp(6),
-    backgroundColor: colors.teal,
+    backgroundColor: colors.gold,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: wp(4),
@@ -421,14 +449,13 @@ const styles = StyleSheet.create({
   profileDate: {
     fontSize: fontSize(20),
     fontFamily: fonts.bold,
-    color: colors.navy,
+    color: colors.black,
     marginBottom: hp(0.5),
   },
   profileLabel: {
     fontSize: fontSize(14),
     fontFamily: fonts.regular,
-    color: colors.navy,
-    opacity: 0.7,
+    color: colors.sand,
   },
   summarySection: {
     marginBottom: hp(4),
@@ -436,13 +463,13 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: fontSize(18),
     fontFamily: fonts.bold,
-    color: colors.navy,
+    color: colors.black,
     marginBottom: hp(2),
   },
   profileSummary: {
     fontSize: fontSize(16),
     lineHeight: hp(3),
-    color: colors.navy,
+    color: colors.black,
     fontFamily: fonts.regular,
   },
   traitsSection: {
@@ -454,25 +481,35 @@ const styles = StyleSheet.create({
     marginHorizontal: -wp(2),
   },
   traitBadge: {
-    backgroundColor: colors.teal,
+    backgroundColor: colors.lightGray,
     paddingHorizontal: wp(4),
     paddingVertical: hp(1),
     borderRadius: hp(2),
     margin: wp(2),
   },
   traitText: {
-    color: colors.white,
+    color: colors.black,
     fontSize: fontSize(14),
     fontFamily: fonts.bold,
   },
   compareButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.teal,
+    backgroundColor: colors.gold,
     padding: wp(4),
     borderRadius: wp(3),
     marginTop: hp(2),
+    shadowColor: colors.black,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  compareButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   compareIcon: {
     width: wp(5),
@@ -499,15 +536,14 @@ const styles = StyleSheet.create({
   emptyStateTitle: {
     fontSize: fontSize(24),
     fontFamily: fonts.bold,
-    color: colors.navy,
+    color: colors.black,
     marginBottom: hp(2),
   },
   emptyStateText: {
     fontSize: fontSize(16),
     fontFamily: fonts.regular,
-    color: colors.navy,
+    color: colors.sand,
     textAlign: 'center',
-    opacity: 0.7,
     lineHeight: hp(2.5),
   },
   modalContainer: {
@@ -532,7 +568,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: fontSize(24),
     fontFamily: fonts.bold,
-    color: colors.navy,
+    color: colors.black,
   },
   closeButton: {
     padding: wp(2),
@@ -550,14 +586,14 @@ const styles = StyleSheet.create({
   insightsTitle: {
     fontSize: fontSize(20),
     fontFamily: fonts.bold,
-    color: colors.navy,
+    color: colors.black,
     marginBottom: hp(2),
   },
   insightsText: {
     fontSize: fontSize(16),
+    lineHeight: hp(3),
+    color: colors.black,
     fontFamily: fonts.regular,
-    color: colors.navy,
-    lineHeight: hp(2.5),
   },
   changesSection: {
     marginBottom: hp(4),
@@ -565,7 +601,7 @@ const styles = StyleSheet.create({
   changesTitle: {
     fontSize: fontSize(20),
     fontFamily: fonts.bold,
-    color: colors.navy,
+    color: colors.black,
     marginBottom: hp(2),
   },
   changeItem: {
@@ -577,7 +613,7 @@ const styles = StyleSheet.create({
     width: wp(8),
     height: wp(8),
     borderRadius: wp(4),
-    backgroundColor: colors.teal,
+    backgroundColor: colors.gold,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: wp(3),
@@ -590,7 +626,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: fontSize(16),
     fontFamily: fonts.regular,
-    color: colors.navy,
+    color: colors.black,
     lineHeight: hp(2.5),
   },
 });

@@ -1,17 +1,13 @@
-import React from 'react';
-import { Provider } from 'react-redux';
-import { PersistGate } from 'redux-persist/integration/react';
-import { store, persistor } from './src/store';
-import { NavigationContainer } from '@react-navigation/native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import {
-  StyleSheet,
-  SafeAreaView,
-  StatusBar,
-  Platform,
-  Image,
-} from 'react-native';
+import React, {useCallback, memo} from 'react';
+import {Provider} from 'react-redux';
+import {PersistGate} from 'redux-persist/integration/react';
+import {store, persistor} from './src/store';
+import {NavigationContainer} from '@react-navigation/native';
+import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import {StyleSheet, SafeAreaView, StatusBar, Platform, Image, View, Pressable} from 'react-native';
+import Animated, {useAnimatedStyle, withSpring, useSharedValue} from 'react-native-reanimated';
+import {StripeProvider} from '@stripe/stripe-react-native';
 
 import DailyPromptScreen from './src/screens/DailyPromptScreen';
 import JournalScreen from './src/screens/JournalScreen';
@@ -19,132 +15,196 @@ import ProfileScreen from './src/screens/ProfileScreen';
 import EvolutionScreen from './src/screens/EvolutionScreen';
 import PremiumScreen from './src/screens/PremiumScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
-import { colors } from './src/constant/colors';
-import { icons } from './src/constant/icons';
-import { hp } from './src/helpers/globalFunction';
+import {colors} from './src/constant/colors';
+import {icons} from './src/constant/icons';
+import {hp, wp} from './src/helpers/globalFunction';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
+const TAB_BAR_HEIGHT = hp(8);
+const TAB_BAR_MARGIN = hp(2);
+const TAB_BAR_PADDING = hp(1);
 
-function TabNavigator() {
+const AnimatedTabBarIcon = memo(({focused, icon}) => {
+  const scale = useSharedValue(1);
+  const translateY = useSharedValue(0);
+
+  React.useEffect(() => {
+    scale.value = withSpring(focused ? 1.1 : 1, {damping: 10});
+    translateY.value = withSpring(focused ? -2 : 0, {damping: 10});
+  }, [focused]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{scale: scale.value}, {translateY: translateY.value}],
+  }));
+
+  return (
+    <Animated.View style={[styles.tabIconContainer, animatedStyle]}>
+      <Image
+        source={icon}
+        style={[styles.tabIcon, {tintColor: focused ? colors.gold : colors.sand}]}
+        resizeMode="contain"
+      />
+    </Animated.View>
+  );
+});
+
+const TabButton = memo(({onPress, onLongPress, icon}) => (
+  <Pressable
+    onPress={onPress}
+    onLongPress={onLongPress}
+    style={({pressed}) => [styles.tabButton, {opacity: pressed ? 0.7 : 1}]}
+    android_ripple={{color: colors.lightGray, borderless: true}}>
+    {icon}
+  </Pressable>
+));
+
+const MyTabBar = React.memo(({state, descriptors, navigation}) => {
+  const renderTab = (route, index) => {
+    const {options} = descriptors[route.key];
+    const isFocused = state.index === index;
+
+    const onPress = () => {
+      const event = navigation.emit({
+        type: 'tabPress',
+        target: route.key,
+        canPreventDefault: true,
+      });
+
+      if (!isFocused && !event.defaultPrevented) {
+        navigation.navigate(route.name);
+      }
+    };
+
+    const onLongPress = () => {
+      navigation.emit({
+        type: 'tabLongPress',
+        target: route.key,
+      });
+    };
+
+    return (
+      <TabButton
+        key={route.key}
+        onPress={onPress}
+        onLongPress={onLongPress}
+        icon={options.tabBarIcon({focused: isFocused})}
+      />
+    );
+  };
+
+  return (
+    <View style={styles.tabBarContainer}>
+      <View style={styles.tabBar}>{state.routes.map(renderTab)}</View>
+    </View>
+  );
+});
+
+const ScreenWrapper = memo(({children}) => (
+  <SafeAreaView style={styles.screenWrapper}>
+    <View style={styles.screenContent}>{children}</View>
+  </SafeAreaView>
+));
+
+const TabNavigator = memo(() => {
+  const renderScreen = useCallback(
+    (name, component, icon) => (
+      <Tab.Screen
+        name={name}
+        component={props => <ScreenWrapper>{React.createElement(component, props)}</ScreenWrapper>}
+        options={{
+          tabBarIcon: ({focused}) => <AnimatedTabBarIcon focused={focused} icon={icon} />,
+        }}
+      />
+    ),
+    [],
+  );
+
   return (
     <Tab.Navigator
-      screenOptions={{
-        tabBarStyle: {
-          backgroundColor: colors.navy,
-        },
-        tabBarActiveTintColor: colors.sky,
-        tabBarInactiveTintColor: colors.beige,
-        headerShown: false,
-        tabBarShowLabel: false,
-      }}>
-      <Tab.Screen
-        name="Daily Prompt"
-        component={DailyPromptScreen}
-        options={{
-          tabBarIcon: ({color}) => (
-            <Image
-              source={icons.pencil}
-              style={{height: hp(3.69), width: hp(3.69)}}
-              tintColor={color}
-              resizeMode="contain"
-            />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Journal"
-        component={JournalScreen}
-        options={{
-          tabBarIcon: ({color}) => (
-            <Image
-              source={icons.journal}
-              style={{height: hp(3.69), width: hp(3.69)}}
-              tintColor={color}
-              resizeMode="contain"
-            />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Profile"
-        component={ProfileScreen}
-        options={{
-          tabBarIcon: ({color}) => (
-            <Image
-              source={icons.user}
-              style={{height: hp(3.69), width: hp(3.69)}}
-              tintColor={color}
-              resizeMode="contain"
-            />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Evolution"
-        component={EvolutionScreen}
-        options={{
-          tabBarIcon: ({color}) => (
-            <Image
-              source={icons.evolution}
-              style={{height: hp(3.69), width: hp(3.69)}}
-              tintColor={color}
-              resizeMode="contain"
-            />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Premium"
-        component={PremiumScreen}
-        options={{
-          tabBarIcon: ({color}) => (
-            <Image
-              source={icons.premium}
-              style={{height: hp(3.69), width: hp(3.69)}}
-              tintColor={color}
-              resizeMode="contain"
-            />
-          ),
-        }}
-      />
+      tabBar={props => <MyTabBar {...props} />}
+      screenOptions={{headerShown: false}}>
+      {renderScreen('Daily Prompt', DailyPromptScreen, icons.pencil)}
+      {renderScreen('Journal', JournalScreen, icons.journal)}
+      {renderScreen('Profile', ProfileScreen, icons.user)}
+      {renderScreen('Evolution', EvolutionScreen, icons.evolution)}
+      {renderScreen('Premium', PremiumScreen, icons.premium)}
     </Tab.Navigator>
   );
-}
+});
 
-const App = () => {
-  return (
-    <Provider store={store}>
-      <PersistGate loading={null} persistor={persistor}>
+const App = memo(() => (
+  <Provider store={store}>
+    <PersistGate loading={null} persistor={persistor}>
+      <StripeProvider publishableKey="pk_test_51RNvQYQSZX7Hq8sOpDlIl6uKkn3zcER58hey4MqboUmB8vj0VQHeDRmzUNBFs3ezPBm52HcAL4bV5XakToOWlV6Y00Is0BmnDP">
         <SafeAreaView style={styles.container}>
-          <StatusBar barStyle={'dark-content'} />
+          <StatusBar barStyle="dark-content" translucent />
           <NavigationContainer>
             <Stack.Navigator>
-              <Stack.Screen
-                name="MainTabs"
-                component={TabNavigator}
-                options={{headerShown: false}}
-              />
+              <Stack.Screen name="MainTabs" component={TabNavigator} options={{headerShown: false}} />
               <Stack.Screen
                 name="Settings"
                 component={SettingsScreen}
-                options={{
-                  presentation: 'modal',
-                }}
+                options={{presentation: 'modal', headerShown: false}}
               />
             </Stack.Navigator>
           </NavigationContainer>
         </SafeAreaView>
-      </PersistGate>
-    </Provider>
-  );
-};
+      </StripeProvider>
+    </PersistGate>
+  </Provider>
+));
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+    backgroundColor: colors.background,
+  },
+  screenWrapper: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  screenContent: {
+    flex: 1,
+    paddingBottom: TAB_BAR_HEIGHT + TAB_BAR_MARGIN + TAB_BAR_PADDING,
+    backgroundColor: colors.white,
+  },
+  tabBarContainer: {
+    position: 'absolute',
+    bottom: TAB_BAR_MARGIN,
+    left: 0,
+    right: 0,
+    height: TAB_BAR_HEIGHT + TAB_BAR_MARGIN,
+    paddingBottom: Platform.OS === 'ios' ? TAB_BAR_MARGIN : 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tabBar: {
+    flexDirection: 'row',
+    height: TAB_BAR_HEIGHT,
+    backgroundColor: colors.white,
+    borderRadius: wp(4),
+    shadowColor: colors.black,
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+    marginHorizontal: wp(5),
+  },
+  tabButton: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  tabIconContainer: {
+    width: wp(12),
+    height: wp(12),
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  tabIcon: {
+    width: wp(6),
+    height: wp(6),
   },
 });
 

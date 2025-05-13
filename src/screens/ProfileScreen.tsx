@@ -7,6 +7,9 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Image,
+  Platform,
+  StatusBar,
+  Animated,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {useDispatch, useSelector} from 'react-redux';
@@ -16,10 +19,7 @@ import {colors} from '../constant/colors';
 import {fonts} from '../constant/fonts';
 import {icons} from '../constant/icons';
 import {RootState} from '../store';
-import {
-  setCurrentProfile,
-  addHistoricalProfile,
-} from '../store/slices/profileSlice';
+import {setCurrentProfile, addHistoricalProfile} from '../store/slices/profileSlice';
 
 type RootStackParamList = {
   Settings: undefined;
@@ -35,18 +35,32 @@ interface PersonaProfile {
   lastUpdated: string;
 }
 
+const STATUS_BAR_HEIGHT = Platform.OS === 'android' ? StatusBar.currentHeight ?? 0 : 0;
+
 const ProfileScreen = () => {
   const navigation = useNavigation<NavigationProp>();
   const dispatch = useDispatch();
   const [isLoading, setIsLoading] = useState(true);
+  const fadeAnim = React.useRef(new Animated.Value(0)).current;
+  const slideAnim = React.useRef(new Animated.Value(50)).current;
 
-  const profile = useSelector(
-    (state: RootState) => state.profile.currentProfile,
-  );
+  const profile = useSelector((state: RootState) => state.profile.currentProfile);
   const isPremium = useSelector((state: RootState) => state.premium.isPremium);
 
   useEffect(() => {
     loadProfile();
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+    ]).start();
   }, []);
 
   const loadProfile = async () => {
@@ -64,35 +78,24 @@ const ProfileScreen = () => {
   const generateProfile = async () => {
     try {
       const mockProfile: PersonaProfile = {
-        summary:
-          "You are a thoughtful and introspective individual who values personal growth and self-awareness. Your journal entries show a deep appreciation for life's meaningful moments and a desire to understand yourself better.",
-        traits: [
-          'Introspective',
-          'Growth-oriented',
-          'Self-aware',
-          'Thoughtful',
-          'Curious',
-        ],
+        summary: "You are a thoughtful and introspective individual who values personal growth and self-awareness. Your journal entries show a deep appreciation for life's meaningful moments and a desire to understand yourself better.",
+        traits: ['Introspective', 'Growth-oriented', 'Self-aware', 'Thoughtful', 'Curious'],
         lastUpdated: new Date().toISOString(),
       };
 
       dispatch(setCurrentProfile(mockProfile));
-      dispatch(
-        addHistoricalProfile({
-          summary: mockProfile.summary,
-          traits: mockProfile.traits,
-          timestamp: mockProfile.lastUpdated,
-        }),
-      );
+      dispatch(addHistoricalProfile({
+        summary: mockProfile.summary,
+        traits: mockProfile.traits,
+        timestamp: mockProfile.lastUpdated,
+      }));
     } catch (error) {
       console.error('Error generating profile:', error);
     }
   };
 
   const handleRegenerateProfile = async () => {
-    if (!isPremium) {
-      return;
-    }
+    if (!isPremium) return;
     setIsLoading(true);
     await generateProfile();
     setIsLoading(false);
@@ -101,176 +104,284 @@ const ProfileScreen = () => {
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#4A90E2" />
+        <ActivityIndicator size="large" color={colors.gold} />
       </View>
     );
   }
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.headerTop}>
-          <Text style={styles.title}>Who You Are Right Now</Text>
-          <TouchableOpacity
-            style={styles.settingsButton}
-            onPress={() => navigation.navigate('Settings')}>
+    <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor={colors.white} />
+
+      <Animated.View style={[styles.header, {opacity: fadeAnim, transform: [{translateY: slideAnim}]}]}>
+        <View style={styles.headerContent}>
+          <View style={styles.headerTop}>
+            <Text style={styles.title}>Who You Are Right Now</Text>
+            <TouchableOpacity
+              style={styles.settingsButton}
+              onPress={() => navigation.navigate('Settings')}>
+              <Image
+                source={icons.setting}
+                style={styles.settingsIcon}
+                tintColor={colors.black}
+                resizeMode="contain"
+              />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.lastUpdatedContainer}>
             <Image
-              source={icons.setting}
-              style={styles.settingsIcon}
-              tintColor={colors.navy}
+              source={icons.calendar}
+              style={styles.calendarIcon}
+              tintColor={colors.gold}
               resizeMode="contain"
             />
-          </TouchableOpacity>
+            <Text style={styles.lastUpdated}>
+              Last updated: {profile?.lastUpdated ? new Date(profile.lastUpdated).toLocaleDateString() : 'Never'}
+            </Text>
+          </View>
         </View>
-        <Text style={styles.lastUpdated}>
-          Last updated:{' '}
-          {profile?.lastUpdated
-            ? new Date(profile.lastUpdated).toLocaleDateString()
-            : 'Never'}
-        </Text>
-      </View>
+      </Animated.View>
 
-      <View style={styles.summaryCard}>
-        <Text style={styles.summaryText}>{profile?.summary}</Text>
-      </View>
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}>
+        <Animated.View style={[styles.summaryCard, {opacity: fadeAnim, transform: [{translateY: slideAnim}]}]}>
+          <View style={styles.summaryHeader}>
+            <Image
+              source={icons.user}
+              style={styles.summaryIcon}
+              tintColor={colors.white}
+              resizeMode="contain"
+            />
+            <Text style={styles.summaryTitle}>Your Summary</Text>
+          </View>
+          <Text style={styles.summaryText}>{profile?.summary}</Text>
+        </Animated.View>
 
-      <View style={styles.traitsContainer}>
-        <Text style={styles.traitsTitle}>Your Traits</Text>
-        <View style={styles.traitsList}>
-          {profile?.traits.map((trait, index) => (
-            <View key={index} style={styles.traitBadge}>
-              <Text style={styles.traitText}>{trait}</Text>
+        <Animated.View
+          style={[
+            styles.traitsContainer,
+            {
+              opacity: fadeAnim,
+              transform: [{translateY: slideAnim}],
+            },
+          ]}>
+          <View style={styles.traitsHeader}>
+            <Image
+              source={icons.evolution}
+              style={styles.traitsIcon}
+              tintColor={colors.gold}
+              resizeMode="contain"
+            />
+            <Text style={styles.traitsTitle}>Your Traits</Text>
+          </View>
+          <View style={styles.traitsList}>
+            {profile?.traits.map((trait, index) => (
+              <View key={index} style={styles.traitBadge}>
+                <Text style={styles.traitText}>{trait}</Text>
+              </View>
+            ))}
+          </View>
+        </Animated.View>
+
+        <TouchableOpacity
+          style={[styles.regenerateButton, !isPremium && styles.regenerateButtonDisabled]}
+          onPress={handleRegenerateProfile}
+          disabled={!isPremium}
+          activeOpacity={0.8}>
+          <View style={styles.regenerateButtonContent}>
+            <Image
+              source={icons.premium}
+              resizeMode="contain"
+              style={styles.upgradeIcon}
+              tintColor={colors.white}
+            />
+            <Text style={styles.regenerateButtonText}>
+              {isPremium ? 'Regenerate Profile' : 'Upgrade to Regenerate'}
+            </Text>
+          </View>
+          {!isPremium && (
+            <View style={styles.premiumBadge}>
+              <Text style={styles.premiumBadgeText}>PRO</Text>
             </View>
-          ))}
-        </View>
-      </View>
-
-      <TouchableOpacity
-        style={[
-          styles.regenerateButton,
-          !isPremium && styles.regenerateButtonDisabled,
-        ]}
-        onPress={handleRegenerateProfile}
-        disabled={!isPremium}>
-        <Image
-          source={icons.premium}
-          resizeMode="contain"
-          style={styles.upgradeIcon}
-          tintColor={colors.beige}
-        />
-        <Text style={styles.regenerateButtonText}>
-          {isPremium ? 'Regenerate Profile' : 'Upgrade to Regenerate'}
-        </Text>
-      </TouchableOpacity>
-    </ScrollView>
+          )}
+        </TouchableOpacity>
+      </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.white,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: colors.white,
   },
   header: {
-    paddingVertical: wp(5.33),
-    margin: wp(5.33),
-    borderRadius: wp(3.2),
+    paddingTop: Platform.OS === 'ios' ? hp(6) : STATUS_BAR_HEIGHT + hp(2),
+    paddingBottom: hp(2),
+    backgroundColor: colors.white,
+  },
+  headerContent: {
+    paddingHorizontal: wp(5),
   },
   headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: wp(2.13),
+    marginBottom: hp(1),
   },
   title: {
-    fontSize: fontSize(28),
-    fontFamily: fonts.bold,
-    color: colors.navy,
-    marginBottom: wp(2.13),
+    fontSize: fontSize(32),
+    fontFamily: fonts.black,
+    color: colors.black,
+  },
+  settingsButton: {
+    padding: wp(2),
+  },
+  settingsIcon: {
+    width: wp(6),
+    height: wp(6),
+  },
+  lastUpdatedContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  calendarIcon: {
+    width: wp(4),
+    height: wp(4),
+    marginRight: wp(2),
   },
   lastUpdated: {
-    fontSize: fontSize(16),
-    color: colors.navy,
+    fontSize: fontSize(14),
+    fontFamily: fonts.regular,
+    color: colors.sand,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: wp(5),
+    paddingBottom: hp(4),
   },
   summaryCard: {
-    marginHorizontal: wp(5.33),
-    padding: wp(5.33),
-    backgroundColor: colors.teal,
-    borderRadius: wp(3.2),
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    backgroundColor: colors.gold,
+    borderRadius: wp(4),
+    padding: wp(5),
+    marginBottom: hp(3),
+    shadowColor: colors.black,
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  summaryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: hp(2),
+  },
+  summaryIcon: {
+    width: wp(6),
+    height: wp(6),
+    marginRight: wp(3),
+  },
+  summaryTitle: {
+    fontSize: fontSize(20),
+    fontFamily: fonts.bold,
+    color: colors.black,
+  },
+  summaryText: {
+    fontSize: fontSize(16),
+    fontFamily: fonts.regular,
+    color: colors.black,
+    lineHeight: hp(2.6),
+  },
+  traitsContainer: {
+    backgroundColor: colors.white,
+    borderRadius: wp(4),
+    padding: wp(5),
+    marginBottom: hp(3),
+    shadowColor: colors.black,
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
-  summaryText: {
-    fontSize: fontSize(18),
-    lineHeight: hp(3),
-    color: colors.beige,
-    fontFamily: fonts.regular,
+  traitsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: hp(2),
   },
-  traitsContainer: {
-    padding: wp(5.33),
+  traitsIcon: {
+    width: wp(6),
+    height: wp(6),
+    marginRight: wp(3),
   },
   traitsTitle: {
-    fontSize: fontSize(22),
+    fontSize: fontSize(20),
     fontFamily: fonts.bold,
-    color: colors.navy,
-    marginBottom: hp(1.97),
+    color: colors.black,
   },
   traitsList: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginHorizontal: wp(-1.066),
+    marginHorizontal: -wp(1),
   },
   traitBadge: {
-    backgroundColor: colors.navy,
-    paddingHorizontal: wp(3.2),
-    paddingVertical: wp(1.6),
-    borderRadius: hp(1.97),
-    margin: wp(1.066),
+    backgroundColor: colors.lightGray,
+    paddingVertical: hp(1),
+    paddingHorizontal: wp(3),
+    borderRadius: wp(4),
+    margin: wp(1),
   },
   traitText: {
-    color: colors.beige,
-    fontSize: fontSize(18),
-    fontFamily: fonts.bold,
+    fontSize: fontSize(14),
+    fontFamily: fonts.regular,
+    color: colors.black,
   },
   regenerateButton: {
+    backgroundColor: colors.black,
+    borderRadius: wp(4),
+    padding: wp(5),
+    marginTop: hp(2),
+  },
+  regenerateButtonDisabled: {
+    opacity: 0.7,
+  },
+  regenerateButtonContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    margin: wp(5.33),
-    padding: wp(4.26),
-    backgroundColor: colors.teal,
-    borderRadius: wp(3.2),
-  },
-  regenerateButtonDisabled: {
-    opacity: 0.6,
-  },
-  regenerateButtonText: {
-    marginLeft: wp(2.13),
-    fontSize: fontSize(22),
-    fontFamily: fonts.bold,
-    color: colors.beige,
   },
   upgradeIcon: {
-    height: wp(6.4),
-    width: wp(6.4),
+    width: wp(5),
+    height: wp(5),
+    marginRight: wp(2),
   },
-  settingsButton: {
-    padding: wp(2.13),
+  regenerateButtonText: {
+    fontSize: fontSize(16),
+    fontFamily: fonts.bold,
+    color: colors.white,
   },
-  settingsIcon: {
-    width: wp(6.4),
-    height: wp(6.4),
+  premiumBadge: {
+    position: 'absolute',
+    top: -hp(1),
+    right: -wp(2),
+    backgroundColor: colors.gold,
+    paddingVertical: hp(0.5),
+    paddingHorizontal: wp(2),
+    borderRadius: wp(2),
+  },
+  premiumBadgeText: {
+    fontSize: fontSize(12),
+    fontFamily: fonts.bold,
+    color: colors.black,
   },
 });
 

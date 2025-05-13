@@ -7,6 +7,9 @@ import {
   Switch,
   Alert,
   ScrollView,
+  Image,
+  Platform,
+  StatusBar,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {RootState} from '../store';
@@ -14,6 +17,12 @@ import {clearProfile} from '../store/slices/profileSlice';
 import {clearEntries} from '../store/slices/journalSlice';
 import {clearSubscription} from '../store/slices/premiumSlice';
 import {clearPromptHistory} from '../store/slices/promptSlice';
+import {colors} from '../constant/colors';
+import {fonts} from '../constant/fonts';
+import {icons} from '../constant/icons';
+import {fontSize, hp, wp} from '../helpers/globalFunction';
+
+const STATUS_BAR_HEIGHT = Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0;
 
 const SettingsScreen = () => {
   const dispatch = useDispatch();
@@ -66,120 +75,238 @@ const SettingsScreen = () => {
     Alert.alert('Success', 'Your data has been exported successfully.');
   };
 
-  return (
-    <ScrollView style={styles.container}>
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Appearance</Text>
-        <View style={styles.settingItem}>
-          <View style={styles.settingInfo}>
-            <Text style={styles.settingText}>Dark Mode</Text>
-          </View>
-          <Switch
-            value={isDarkMode}
-            onValueChange={setIsDarkMode}
-            trackColor={{false: '#E5E5E5', true: '#4A90E2'}}
+  const renderSettingItem = (
+    icon: any,
+    title: string,
+    rightElement?: React.ReactNode,
+    onPress?: () => void,
+    isDanger?: boolean,
+  ) => (
+    <TouchableOpacity
+      style={[styles.settingItem, onPress && styles.settingItemPressable]}
+      onPress={onPress}
+      disabled={!onPress}>
+      <View style={styles.settingInfo}>
+        <View style={[styles.iconContainer, isDanger && styles.dangerIconContainer]}>
+          <Image
+            source={icon}
+            style={[styles.settingIcon, isDanger && styles.dangerIcon]}
+            tintColor={isDanger ? colors.black : colors.gold}
+            resizeMode="contain"
           />
         </View>
+        <Text style={[styles.settingText, isDanger && styles.dangerText]}>
+          {title}
+        </Text>
+      </View>
+      {rightElement}
+    </TouchableOpacity>
+  );
+
+  return (
+    <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor={colors.white} />
+      <View style={[styles.header, {paddingTop: Platform.OS === 'ios' ? hp(6) : STATUS_BAR_HEIGHT + hp(2)}]}>
+        <Text style={styles.headerTitle}>Settings</Text>
+        <Text style={styles.headerSubtitle}>Customize your experience</Text>
       </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Account</Text>
-        <TouchableOpacity style={styles.settingItem} onPress={handleExportData}>
-          <View style={styles.settingInfo}>
-            <Text style={styles.settingText}>Export Data</Text>
-          </View>
-        </TouchableOpacity>
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Appearance</Text>
+          {renderSettingItem(
+            icons.setting,
+            'Dark Mode',
+            <Switch
+              value={isDarkMode}
+              onValueChange={setIsDarkMode}
+              trackColor={{false: colors.lightGray, true: colors.gold}}
+              thumbColor={colors.white}
+            />,
+          )}
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Account</Text>
+          {renderSettingItem(
+            icons.email,
+            'Export Data',
+            null,
+            handleExportData,
+          )}
+          {renderSettingItem(
+            icons.delete,
+            'Delete Account',
+            null,
+            handleDeleteAccount,
+            true,
+          )}
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Subscription</Text>
+          {renderSettingItem(
+            icons.premium,
+            'Premium Status',
+            <View style={[styles.statusBadge, isPremium && styles.activeBadge]}>
+              <Text style={[styles.statusText, isPremium && styles.activeStatusText]}>
+                {isPremium ? 'Active' : 'Inactive'}
+              </Text>
+            </View>,
+          )}
+        </View>
 
         <TouchableOpacity
-          style={styles.settingItem}
-          onPress={handleDeleteAccount}>
-          <View style={styles.settingInfo}>
-            <Text style={[styles.settingText, styles.dangerText]}>
-              Delete Account
-            </Text>
-          </View>
+          style={styles.logoutButton}
+          onPress={handleLogout}
+          activeOpacity={0.8}>
+          <Image
+            source={icons.setting}
+            style={styles.logoutIcon}
+            tintColor={colors.black}
+            resizeMode="contain"
+          />
+          <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
-      </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Subscription</Text>
-        <View style={styles.settingItem}>
-          <View style={styles.settingInfo}>
-            <Text style={styles.settingText}>Premium Status</Text>
-          </View>
-          <Text style={styles.premiumStatus}>
-            {isPremium ? 'Active' : 'Inactive'}
-          </Text>
-        </View>
-      </View>
-
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Text style={styles.logoutText}>Logout</Text>
-      </TouchableOpacity>
-
-      <Text style={styles.version}>Version 1.0.0</Text>
-    </ScrollView>
+        <Text style={styles.version}>Version 1.0.0</Text>
+      </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.white,
+  },
+  header: {
+    paddingBottom: hp(3),
+    paddingHorizontal: wp(6),
+    backgroundColor: colors.white,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.lightGray,
+  },
+  headerTitle: {
+    fontSize: fontSize(32),
+    fontFamily: fonts.bold,
+    color: colors.black,
+    marginBottom: hp(1),
+  },
+  headerSubtitle: {
+    fontSize: fontSize(16),
+    fontFamily: fonts.regular,
+    color: colors.sand,
+  },
+  scrollView: {
+    flex: 1,
   },
   section: {
-    padding: 20,
+    paddingHorizontal: wp(6),
+    paddingVertical: hp(3),
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5E5',
+    borderBottomColor: colors.lightGray,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#666',
-    marginBottom: 16,
+    fontSize: fontSize(18),
+    fontFamily: fonts.bold,
+    color: colors.black,
+    marginBottom: hp(2),
   },
   settingItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 12,
+    paddingVertical: hp(1.5),
+    marginVertical: hp(0.5),
+  },
+  settingItemPressable: {
+    opacity: 1,
   },
   settingInfo: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
+  },
+  iconContainer: {
+    width: wp(10),
+    height: wp(10),
+    borderRadius: wp(5),
+    backgroundColor: colors.lightGray,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: wp(4),
+  },
+  dangerIconContainer: {
+    backgroundColor: colors.lightGray,
+  },
+  settingIcon: {
+    width: wp(5),
+    height: wp(5),
+  },
+  dangerIcon: {
+    tintColor: colors.black,
   },
   settingText: {
-    fontSize: 16,
-    color: '#333',
-    marginLeft: 12,
+    fontSize: fontSize(16),
+    fontFamily: fonts.regular,
+    color: colors.black,
+    flex: 1,
   },
   dangerText: {
-    color: '#FF3B30',
+    color: colors.black,
+    fontFamily: fonts.bold,
   },
-  premiumStatus: {
-    fontSize: 14,
-    color: '#666',
+  statusBadge: {
+    paddingHorizontal: wp(3),
+    paddingVertical: hp(0.5),
+    borderRadius: wp(4),
+    backgroundColor: colors.lightGray,
+  },
+  activeBadge: {
+    backgroundColor: colors.gold,
+  },
+  statusText: {
+    fontSize: fontSize(14),
+    fontFamily: fonts.regular,
+    color: colors.sand,
+  },
+  activeStatusText: {
+    color: colors.white,
   },
   logoutButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    margin: 20,
-    padding: 16,
-    backgroundColor: '#FFF5F5',
-    borderRadius: 12,
+    margin: wp(6),
+    padding: wp(4),
+    backgroundColor: colors.lightGray,
+    borderRadius: wp(3),
+    shadowColor: colors.black,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  logoutIcon: {
+    width: wp(5),
+    height: wp(5),
+    marginRight: wp(2),
   },
   logoutText: {
-    marginLeft: 8,
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FF3B30',
+    fontSize: fontSize(16),
+    fontFamily: fonts.bold,
+    color: colors.black,
   },
   version: {
     textAlign: 'center',
-    fontSize: 14,
-    color: '#999',
-    marginBottom: 32,
+    fontSize: fontSize(14),
+    fontFamily: fonts.regular,
+    color: colors.sand,
+    marginBottom: hp(8),
   },
 });
 

@@ -9,6 +9,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   Image,
+  StatusBar,
+  Dimensions,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {fontSize, hp, wp} from '../helpers/globalFunction';
@@ -27,10 +29,14 @@ const SAMPLE_PROMPTS = [
   'How do you define success for yourself?',
 ];
 
+const {width} = Dimensions.get('window');
+const CARD_WIDTH = width - wp(10);
+
 const DailyPromptScreen = () => {
   const dispatch = useDispatch();
   const [response, setResponse] = useState('');
   const [fadeAnim] = useState(new Animated.Value(0));
+  const [slideAnim] = useState(new Animated.Value(50));
 
   const currentPrompt = useSelector(
     (state: RootState) => state.prompt.currentPrompt,
@@ -38,12 +44,19 @@ const DailyPromptScreen = () => {
 
   useEffect(() => {
     loadPrompt();
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 1000,
-      useNativeDriver: true,
-    }).start();
-  }, [fadeAnim]);
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [fadeAnim, slideAnim]);
 
   const loadPrompt = () => {
     if (!currentPrompt) {
@@ -80,31 +93,62 @@ const DailyPromptScreen = () => {
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}>
-      <Animated.View style={[styles.promptCard, {opacity: fadeAnim}]}>
-        <Text style={styles.promptText}>{currentPrompt}</Text>
+      <StatusBar barStyle="dark-content" backgroundColor={colors.white} />
+      
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Daily Reflection</Text>
+        <Text style={styles.headerSubtitle}>Take a moment to reflect on your journey</Text>
+      </View>
+
+      <Animated.View 
+        style={[
+          styles.promptCard,
+          {
+            opacity: fadeAnim,
+            transform: [{translateY: slideAnim}],
+          },
+        ]}>
+        <View style={styles.promptContent}>
+          <View style={styles.promptIconContainer}>
+            <Image
+              source={icons.journal}
+              style={styles.promptIcon}
+              tintColor={colors.white}
+              resizeMode="contain"
+            />
+          </View>
+          <Text style={styles.promptText}>{currentPrompt}</Text>
+        </View>
       </Animated.View>
 
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          multiline
-          placeholder="Write your thoughts here..."
-          value={response}
-          onChangeText={setResponse}
-          textAlignVertical="top"
-          placeholderTextColor={colors.navy}
-        />
+      <View style={styles.inputWrapper}>
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            multiline
+            placeholder="Share your thoughts..."
+            value={response}
+            onChangeText={setResponse}
+            textAlignVertical="top"
+            placeholderTextColor={colors.sand}
+            selectionColor={colors.gold}
+          />
+          <View style={styles.inputFocusIndicator} />
+        </View>
       </View>
 
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
+        <TouchableOpacity 
+          style={styles.skipButton} 
+          onPress={handleSkip}
+          activeOpacity={0.8}>
           <Image
             source={icons.add}
-            style={{height: wp(6.4), width: wp(6.4)}}
-            tintColor={colors.teal}
+            style={styles.skipIcon}
+            tintColor={colors.gold}
             resizeMode="contain"
           />
-          <Text style={styles.skipButtonText}>New Prompt</Text>
+          <Text style={styles.skipButtonText}>Try Another</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -113,8 +157,9 @@ const DailyPromptScreen = () => {
             !response.trim() && styles.saveButtonDisabled,
           ]}
           onPress={handleSave}
-          disabled={!response.trim()}>
-          <Text style={styles.saveButtonText}>Save & Reflect</Text>
+          disabled={!response.trim()}
+          activeOpacity={0.8}>
+          <Text style={styles.saveButtonText}>Save Reflection</Text>
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
@@ -122,20 +167,75 @@ const DailyPromptScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: 'red',
-  },
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    padding: hp(3.07),
+    backgroundColor: colors.white,
+  },
+  header: {
+    paddingTop: Platform.OS === 'ios' ? hp(6) : StatusBar.currentHeight + hp(2),
+    paddingBottom: hp(2),
+    paddingHorizontal: wp(5),
+    backgroundColor: colors.white,
+  },
+  headerTitle: {
+    fontSize: fontSize(32),
+    fontFamily: fonts.black,
+    color: colors.black,
+    marginBottom: hp(0.5),
+  },
+  headerSubtitle: {
+    fontSize: fontSize(16),
+    fontFamily: fonts.regular,
+    color: colors.sand,
+    opacity: 0.8,
   },
   promptCard: {
-    backgroundColor: colors.teal,
-    padding: hp(2.46),
-    borderRadius: hp(1.47),
-    marginBottom: hp(2.46),
+    width: CARD_WIDTH,
+    alignSelf: 'center',
+    backgroundColor: colors.gold,
+    borderRadius: wp(4),
+    marginBottom: hp(4),
+    shadowColor: colors.black,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  promptContent: {
+    padding: wp(6),
+  },
+  promptIconContainer: {
+    width: wp(12),
+    height: wp(12),
+    borderRadius: wp(6),
+    backgroundColor: colors.black,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: hp(2),
+  },
+  promptIcon: {
+    width: wp(6),
+    height: wp(6),
+  },
+  promptText: {
+    fontSize: fontSize(24),
+    fontFamily: fonts.bold,
+    color: colors.black,
+    lineHeight: hp(3.5),
+  },
+  inputWrapper: {
+    flex: 1,
+    marginHorizontal: wp(5),
+    marginBottom: hp(3),
+  },
+  inputContainer: {
+    flex: 1,
+    backgroundColor: colors.lightGray,
+    borderRadius: wp(4),
+    overflow: 'hidden',
     shadowColor: colors.black,
     shadowOffset: {
       width: 0,
@@ -145,56 +245,78 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  promptText: {
-    fontSize: fontSize(20),
-    fontFamily: fonts.bold,
-    color: colors.beige,
-  },
-  inputContainer: {
-    flex: 1,
-    marginBottom: hp(2.46),
-  },
   input: {
     flex: 1,
-    backgroundColor: colors.lightGray,
-    borderRadius: wp(2.13),
-    padding: hp(1.84),
+    padding: wp(5),
     fontSize: fontSize(18),
-    color: colors.navy,
-    textAlignVertical: 'top',
-    minHeight: hp(24.63),
+    color: colors.black,
     fontFamily: fonts.regular,
+    lineHeight: hp(2.8),
+  },
+  inputFocusIndicator: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 2,
+    backgroundColor: colors.gold,
+    opacity: 0,
   },
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginHorizontal: wp(5),
+    marginBottom: hp(4),
   },
   skipButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: hp(1.47),
+    paddingVertical: hp(1.5),
+    paddingHorizontal: wp(4),
+    backgroundColor: colors.lightGray,
+    borderRadius: wp(3),
+    shadowColor: colors.black,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  skipIcon: {
+    width: wp(5),
+    height: wp(5),
   },
   skipButtonText: {
-    marginLeft: wp(2.13),
-    color: colors.navy,
-    fontSize: fontSize(20),
+    marginLeft: wp(2),
+    color: colors.black,
+    fontSize: fontSize(16),
     fontFamily: fonts.bold,
   },
   saveButton: {
-    backgroundColor: colors.teal,
-    paddingHorizontal: wp(6.4),
-    paddingVertical: hp(1.47),
-    borderRadius: wp(2.13),
+    backgroundColor: colors.black,
+    paddingVertical: hp(1.8),
+    paddingHorizontal: wp(6),
+    borderRadius: wp(3),
+    shadowColor: colors.black,
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 4,
   },
   saveButtonDisabled: {
-    backgroundColor: colors.teal,
-    opacity: 0.6,
+    opacity: 0.5,
   },
   saveButtonText: {
-    color: colors.beige,
-    fontSize: fontSize(20),
+    color: colors.white,
+    fontSize: fontSize(16),
     fontFamily: fonts.bold,
+    letterSpacing: 0.5,
   },
 });
 

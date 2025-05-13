@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useRef, useEffect} from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,10 @@ import {
   Modal,
   ActivityIndicator,
   ViewStyle,
+  Animated,
+  Easing,
+  Dimensions,
+  SafeAreaView,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {RootState} from '../store';
@@ -19,6 +23,10 @@ import {icons} from '../constant/icons';
 import {colors} from '../constant/colors';
 import {fontSize, hp, wp} from '../helpers/globalFunction';
 import {fonts} from '../constant/fonts';
+import LinearGradient from 'react-native-linear-gradient';
+
+const {width: SCREEN_WIDTH} = Dimensions.get('window');
+const ANIMATION_DURATION = 300;
 
 interface PremiumFeature {
   icon: any;
@@ -92,23 +100,32 @@ const PremiumScreen = () => {
   const dispatch = useDispatch();
   const isPremium = useSelector((state: RootState) => state.premium.isPremium);
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>(
-    'monthly',
+    'yearly',
   );
-  const [showComparison, setShowComparison] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(50)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: ANIMATION_DURATION,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: ANIMATION_DURATION,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
 
   const handleUpgrade = async () => {
     try {
       setIsLoading(true);
       setError(null);
-
-      // await stripe.initPaymentSheet({
-      //   paymentIntentClientSecret: sessionId,
-      //   merchantDisplayName: 'EchoPersona',
-      // });
-      // await stripe.presentPaymentSheet();
-
       await new Promise(resolve => setTimeout(resolve, 1500));
       dispatch(setPremiumStatus(true));
     } catch (error) {
@@ -119,82 +136,150 @@ const PremiumScreen = () => {
     }
   };
 
-  const handleExportData = async () => {
-    try {
-      console.log('Exporting data...');
-    } catch (error) {
-      console.error('Error exporting data:', error);
-    }
-  };
-
-  const renderFeatureCard = (feature: PremiumFeature, index: number) => (
-    <View key={index} style={styles.featureCard}>
-      <View style={styles.featureIconWrapper}>
+  const renderFeatureItem = (feature: PremiumFeature, index: number) => (
+    <View key={index} style={styles.featureItem}>
+      <View
+        style={[
+          styles.featureIconContainer,
+          feature.isPremium && styles.premiumFeatureIcon,
+        ]}>
         <Image
           source={feature.icon}
           style={styles.featureIcon}
-          tintColor={feature.isPremium ? colors.teal : colors.navy}
+          tintColor={feature.isPremium ? colors.white : colors.black}
           resizeMode="contain"
         />
       </View>
-      <View style={styles.featureContent}>
-        <View style={styles.featureTitleRow}>
-          <Text style={styles.featureTitle}>{feature.title}</Text>
-          {feature.isPremium && (
-            <View style={styles.premiumBadge}>
-              <Text style={styles.premiumBadgeText}>PRO</Text>
-            </View>
-          )}
-        </View>
-        <Text style={styles.featureDescription}>{feature.description}</Text>
+      <View style={styles.featureTextContainer}>
+        <Text
+          style={[
+            styles.featureTitle,
+            feature.isPremium && styles.premiumFeatureTitle,
+          ]}>
+          {feature.title}
+        </Text>
+        <Text
+          style={[
+            styles.featureDescription,
+            feature.isPremium && styles.premiumFeatureDescription,
+          ]}>
+          {feature.description}
+        </Text>
       </View>
     </View>
   );
 
-  const renderComparisonModal = () => (
-    <Modal
-      visible={showComparison}
-      animationType="slide"
-      transparent={true}
-      onRequestClose={() => setShowComparison(false)}>
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Choose Your Plan</Text>
+  if (isPremium) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="light-content" backgroundColor={colors.black} />
+        <LinearGradient
+          colors={[colors.black, '#1a1a1a']}
+          style={styles.headerGradient}>
+          <View style={styles.headerContent}>
+            <View style={styles.premiumBadge}>
+              <Image
+                source={icons.premium}
+                style={styles.premiumIcon}
+                tintColor={colors.gold}
+                resizeMode="contain"
+              />
+              <Text style={styles.premiumBadgeText}>PREMIUM</Text>
+            </View>
+            <Text style={styles.premiumTitle}>You're Premium!</Text>
+            <Text style={styles.premiumSubtitle}>
+              Enjoy all premium features and benefits
+            </Text>
+          </View>
+        </LinearGradient>
+
+        <Text style={[styles.sectionTitle, styles.premiumFeatureText]}>
+          Your Premium Features
+        </Text>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}>
+          <View style={styles.featuresSection}>
+            {PREMIUM_FEATURES.map(renderFeatureItem)}
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor={colors.black} />
+      <LinearGradient
+        colors={[colors.black, '#1a1a1a']}
+        style={styles.headerGradient}>
+        <View style={styles.headerContent}>
+          <Text style={styles.title}>Upgrade to Premium</Text>
+          <Text style={styles.subtitle}>
+            Unlock all features and transform your self-discovery journey
+          </Text>
+        </View>
+      </LinearGradient>
+
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}>
+        <Animated.View
+          style={[
+            styles.plansContainer,
+            {
+              opacity: fadeAnim,
+              transform: [{translateY: slideAnim}],
+            },
+          ]}>
+          <View style={styles.planSelector}>
             <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setShowComparison(false)}>
-              <Text style={styles.closeButtonText}>×</Text>
+              style={[
+                styles.planButton,
+                selectedPlan === 'monthly' && styles.planButtonActive,
+              ]}
+              onPress={() => setSelectedPlan('monthly')}
+              activeOpacity={0.8}>
+              <Text
+                style={[
+                  styles.planButtonText,
+                  selectedPlan === 'monthly' && styles.planButtonTextActive,
+                ]}>
+                Monthly
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.planButton,
+                selectedPlan === 'yearly' && styles.planButtonActive,
+              ]}
+              onPress={() => setSelectedPlan('yearly')}
+              activeOpacity={0.8}>
+              <View style={styles.yearlyButtonContent}>
+                <Text
+                  style={[
+                    styles.planButtonText,
+                    selectedPlan === 'yearly' && styles.planButtonTextActive,
+                  ]}>
+                  Yearly
+                </Text>
+                <View style={styles.savingsBadge}>
+                  <Text style={styles.savingsText}>Save 20%</Text>
+                </View>
+              </View>
             </TouchableOpacity>
           </View>
 
-          <ScrollView style={styles.modalScroll}>
-            <View style={styles.planCard}>
+          <View style={styles.planCard}>
+            <LinearGradient
+              colors={[colors.gold, '#FFD700']}
+              start={{x: 0, y: 0}}
+              end={{x: 1, y: 1}}
+              style={styles.planGradient}>
               <View style={styles.planHeader}>
-                <Text style={styles.planName}>Free</Text>
-                <Text style={styles.planPrice}>$0</Text>
-                <Text style={styles.planPeriod}>forever</Text>
-              </View>
-              <View style={styles.featuresList}>
-                {FREE_FEATURES.map((feature, index) => (
-                  <View key={index} style={styles.featureRow}>
-                    <Image
-                      source={icons.add}
-                      style={styles.checkIcon}
-                      tintColor={colors.teal}
-                    />
-                    <Text style={styles.featureText}>{feature.title}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-
-            <View style={[styles.planCard, styles.premiumPlanCard]}>
-              <View style={styles.premiumBadge}>
-                <Text style={styles.premiumBadgeText}>BEST VALUE</Text>
-              </View>
-              <View style={styles.planHeader}>
-                <Text style={styles.planName}>Premium</Text>
+                <Text style={styles.planName}>Premium Plan</Text>
                 <View style={styles.priceContainer}>
                   <Text style={styles.currency}>$</Text>
                   <Text style={styles.planPrice}>
@@ -204,141 +289,44 @@ const PremiumScreen = () => {
                     /{selectedPlan === 'monthly' ? 'month' : 'year'}
                   </Text>
                 </View>
-                {selectedPlan === 'yearly' && (
-                  <View style={styles.savingsBadge}>
-                    <Text style={styles.savingsText}>Save 20%</Text>
-                  </View>
-                )}
-              </View>
-
-              <View style={styles.planSelector}>
-                <TouchableOpacity
-                  style={[
-                    styles.planButton,
-                    selectedPlan === 'monthly' && styles.planButtonActive,
-                  ]}
-                  onPress={() => setSelectedPlan('monthly')}>
-                  <Text
-                    style={[
-                      styles.planButtonText,
-                      selectedPlan === 'monthly' && styles.planButtonTextActive,
-                    ]}>
-                    Monthly
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.planButton,
-                    selectedPlan === 'yearly' && styles.planButtonActive,
-                  ]}
-                  onPress={() => setSelectedPlan('yearly')}>
-                  <Text
-                    style={[
-                      styles.planButtonText,
-                      selectedPlan === 'yearly' && styles.planButtonTextActive,
-                    ]}>
-                    Yearly
-                  </Text>
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.featuresList}>
-                {PREMIUM_FEATURES.map((feature, index) => (
-                  <View key={index} style={styles.featureRow}>
-                    <Image
-                      source={icons.add}
-                      style={styles.checkIcon}
-                      tintColor={colors.teal}
-                    />
-                    <Text style={styles.featureText}>{feature.title}</Text>
-                  </View>
-                ))}
               </View>
 
               <TouchableOpacity
                 style={styles.upgradeButton}
-                onPress={() => {
-                  setShowComparison(false);
-                  handleUpgrade();
-                }}
-                disabled={isLoading}>
+                onPress={handleUpgrade}
+                disabled={isLoading}
+                activeOpacity={0.8}>
                 {isLoading ? (
                   <ActivityIndicator color={colors.white} />
                 ) : (
                   <Text style={styles.upgradeButtonText}>Upgrade Now</Text>
                 )}
               </TouchableOpacity>
-            </View>
-          </ScrollView>
-        </View>
-      </View>
-    </Modal>
-  );
-
-  return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={colors.white} />
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        bounces={false}>
-        <View style={styles.header}>
-          <View style={styles.headerContent}>
-            <Image
-              source={icons.premium}
-              style={styles.premiumIcon}
-              tintColor={colors.gold}
-              resizeMode="contain"
-            />
-            <Text style={styles.title}>Unlock Premium</Text>
-            <Text style={styles.subtitle}>
-              Enhance your self-discovery journey with powerful features
-            </Text>
+            </LinearGradient>
           </View>
-        </View>
 
-        {isPremium && (
-          <View style={styles.statusCard}>
-            <Text style={styles.statusTitle}>Premium Active</Text>
-            <Text style={styles.statusDescription}>
-              Enjoy all premium features and benefits
-            </Text>
-            <TouchableOpacity
-              style={styles.exportButton}
-              onPress={handleExportData}>
-              <Text style={styles.exportButtonText}>Export My Data</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        <View style={styles.featuresSection}>
-          <View style={styles.sectionHeader}>
+          <View style={styles.featuresSection}>
             <Text style={styles.sectionTitle}>Premium Features</Text>
-            <TouchableOpacity
-              style={styles.compareButton}
-              onPress={() => setShowComparison(true)}>
-              <Text style={styles.compareButtonText}>Compare Plans</Text>
-            </TouchableOpacity>
+            {PREMIUM_FEATURES.map(renderFeatureItem)}
           </View>
-          <View style={styles.featuresContainer}>
-            {PREMIUM_FEATURES.map(renderFeatureCard)}
-          </View>
-        </View>
 
-        {error && (
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>{error}</Text>
+          <View style={styles.featuresSection}>
+            <Text style={styles.sectionTitle}>Free Features</Text>
+            {FREE_FEATURES.map(renderFeatureItem)}
           </View>
-        )}
 
-        <Text style={styles.terms}>
-          By upgrading, you agree to our Terms of Service and Privacy Policy
-        </Text>
+          {error && (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
+          )}
+
+          <Text style={styles.terms}>
+            By upgrading, you agree to our Terms of Service and Privacy Policy
+          </Text>
+        </Animated.View>
       </ScrollView>
-
-      {renderComparisonModal()}
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -347,63 +335,199 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.white,
   },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingBottom: Platform.OS === 'ios' ? hp(8) : hp(6),
-  },
-  header: {
-    backgroundColor: colors.teal,
-    paddingTop: Platform.OS === 'ios' ? hp(6) : hp(4),
-    paddingBottom: hp(6),
-    borderBottomLeftRadius: wp(8),
-    borderBottomRightRadius: wp(8),
+  headerGradient: {
+    paddingTop: Platform.OS === 'ios' ? hp(2) : hp(4),
+    paddingBottom: hp(4),
+    borderBottomLeftRadius: wp(4),
+    borderBottomRightRadius: wp(4),
   },
   headerContent: {
     alignItems: 'center',
     paddingHorizontal: wp(6),
   },
-  premiumIcon: {
-    width: wp(20),
-    height: wp(20),
+  premiumBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    paddingVertical: hp(1),
+    paddingHorizontal: wp(4),
+    borderRadius: wp(4),
     marginBottom: hp(2),
+  },
+  premiumIcon: {
+    width: wp(5),
+    height: wp(5),
+    marginRight: wp(2),
+  },
+  premiumBadgeText: {
+    color: colors.gold,
+    fontSize: fontSize(14),
+    fontFamily: fonts.bold,
+  },
+  premiumTitle: {
+    fontSize: fontSize(32),
+    fontFamily: fonts.bold,
+    color: colors.white,
+    marginBottom: hp(1),
+    textAlign: 'center',
+  },
+  premiumSubtitle: {
+    fontSize: fontSize(16),
+    fontFamily: fonts.regular,
+    color: colors.white,
+    opacity: 0.8,
+    textAlign: 'center',
   },
   title: {
     fontSize: fontSize(32),
-    fontFamily: fonts.black,
+    fontFamily: fonts.bold,
     color: colors.white,
     marginBottom: hp(1),
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: fontSize(18),
+    fontSize: fontSize(16),
     fontFamily: fonts.regular,
     color: colors.white,
-    opacity: 0.9,
+    opacity: 0.8,
     textAlign: 'center',
-    lineHeight: hp(3),
+    lineHeight: hp(2.5),
   },
-  featuresSection: {
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: Platform.OS === 'ios' ? hp(5) : hp(3),
     paddingHorizontal: wp(6),
-    marginTop: hp(4),
   },
-  sectionTitle: {
+  plansContainer: {
+    paddingHorizontal: wp(6),
+    paddingTop: hp(2),
+  },
+  planSelector: {
+    flexDirection: 'row',
+    backgroundColor: colors.lightGray,
+    borderRadius: wp(3),
+    padding: wp(1),
+    marginBottom: hp(4),
+  },
+  planButton: {
+    flex: 1,
+    paddingVertical: hp(1.5),
+    paddingHorizontal: wp(3),
+    borderRadius: wp(2),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  planButtonActive: {
+    backgroundColor: colors.white,
+    shadowColor: colors.black,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  yearlyButtonContent: {
+    alignItems: 'center',
+  },
+  planButtonText: {
+    fontSize: fontSize(16),
+    fontFamily: fonts.regular,
+    color: colors.black,
+  },
+  planButtonTextActive: {
+    fontFamily: fonts.bold,
+  },
+  savingsBadge: {
+    backgroundColor: colors.gold,
+    paddingVertical: hp(0.5),
+    paddingHorizontal: wp(2),
+    borderRadius: wp(2),
+    marginTop: hp(0.5),
+  },
+  savingsText: {
+    color: colors.white,
+    fontSize: fontSize(12),
+    fontFamily: fonts.bold,
+  },
+  planCard: {
+    borderRadius: wp(6),
+    overflow: 'hidden',
+    marginBottom: hp(4),
+    shadowColor: colors.black,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  planGradient: {
+    padding: wp(6),
+  },
+  planHeader: {
+    alignItems: 'center',
+    marginBottom: hp(4),
+  },
+  planName: {
     fontSize: fontSize(24),
     fontFamily: fonts.bold,
-    color: colors.navy,
+    color: colors.white,
     marginBottom: hp(2),
   },
-  featuresContainer: {
-    gap: hp(2),
+  priceContainer: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'center',
   },
-  featureCard: {
+  currency: {
+    fontSize: fontSize(24),
+    fontFamily: fonts.bold,
+    color: colors.white,
+    marginRight: wp(1),
+  },
+  planPrice: {
+    fontSize: fontSize(48),
+    fontFamily: fonts.bold,
+    color: colors.white,
+  },
+  planPeriod: {
+    fontSize: fontSize(16),
+    fontFamily: fonts.regular,
+    color: colors.white,
+    opacity: 0.8,
+  },
+  upgradeButton: {
+    backgroundColor: colors.black,
+    paddingVertical: hp(2),
+    borderRadius: wp(3),
+    alignItems: 'center',
+  },
+  upgradeButtonText: {
+    fontSize: fontSize(18),
+    fontFamily: fonts.bold,
+    color: colors.white,
+  },
+  featuresSection: {
+    marginBottom: hp(2),
+  },
+  sectionTitle: {
+    fontSize: fontSize(20),
+    fontFamily: fonts.bold,
+    color: colors.black,
+    marginBottom: hp(2),
+  },
+  featureItem: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.white,
     padding: wp(4),
     borderRadius: wp(4),
+    marginBottom: hp(2),
     shadowColor: colors.black,
     shadowOffset: {
       width: 0,
@@ -413,7 +537,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 2,
   },
-  featureIconWrapper: {
+  featureIconContainer: {
     width: wp(12),
     height: wp(12),
     borderRadius: wp(6),
@@ -422,357 +546,60 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: wp(4),
   },
+  premiumFeatureIcon: {
+    backgroundColor: colors.gold,
+  },
   featureIcon: {
     width: wp(6),
     height: wp(6),
   },
-  featureContent: {
+  featureTextContainer: {
     flex: 1,
   },
-  featureTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  featureTitle: {
+    fontSize: fontSize(16),
+    fontFamily: fonts.bold,
+    color: colors.black,
     marginBottom: hp(0.5),
   },
-  featureTitle: {
-    fontSize: fontSize(18),
+  premiumFeatureTitle: {
+    // color: colors.white,
+    fontSize: fontSize(16),
     fontFamily: fonts.bold,
-    color: colors.navy,
+    color: colors.black,
+    marginBottom: hp(0.5),
   },
   featureDescription: {
     fontSize: fontSize(14),
     fontFamily: fonts.regular,
-    color: colors.navy,
-    opacity: 0.7,
+    color: colors.sand,
     lineHeight: hp(2.5),
   },
-  pricingSection: {
-    paddingHorizontal: wp(6),
-    marginTop: hp(4),
+  premiumFeatureDescription: {
+    color: colors.sand,
+    opacity: 0.9,
   },
-  pricingCard: {
-    backgroundColor: colors.white,
-    borderRadius: wp(4),
-    padding: wp(4),
-    shadowColor: colors.black,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  planSelector: {
-    flexDirection: 'row',
+  errorContainer: {
     backgroundColor: colors.lightGray,
-    borderRadius: wp(2),
-    padding: wp(1),
+    padding: wp(4),
+    borderRadius: wp(3),
     marginBottom: hp(3),
   },
-  planButton: {
-    flex: 1,
-    paddingVertical: hp(1.5),
-    paddingHorizontal: wp(3),
-    borderRadius: wp(1.5),
-    alignItems: 'center',
-  },
-  planButtonActive: {
-    backgroundColor: colors.white,
-    shadowColor: colors.black,
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  planButtonText: {
-    fontSize: fontSize(16),
-    fontFamily: fonts.regular,
-    color: colors.navy,
-  },
-  planButtonTextActive: {
-    fontFamily: fonts.bold,
-  },
-  savingsBadge: {
-    backgroundColor: colors.teal,
-    paddingVertical: hp(0.5),
-    paddingHorizontal: wp(3),
-    borderRadius: wp(2),
-    marginTop: hp(1),
-  } as ViewStyle,
-  priceContainer: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'center',
-    marginBottom: hp(1),
-  },
-  currency: {
-    fontSize: fontSize(24),
-    fontFamily: fonts.bold,
-    color: colors.navy,
-    marginRight: wp(1),
-  },
-  price: {
-    fontSize: fontSize(48),
-    fontFamily: fonts.black,
-    color: colors.navy,
-  },
-  period: {
-    fontSize: fontSize(18),
-    fontFamily: fonts.regular,
-    color: colors.navy,
-    opacity: 0.7,
-    marginLeft: wp(1),
-  },
-  savingsContainer: {
-    backgroundColor: colors.teal,
-    paddingVertical: hp(1),
-    paddingHorizontal: wp(4),
-    borderRadius: wp(2),
-    alignSelf: 'center',
-    marginTop: hp(2),
-  },
-  savingsText: {
-    color: colors.white,
+  errorText: {
+    color: colors.black,
     fontSize: fontSize(14),
-    fontFamily: fonts.bold,
-  },
-  upgradeButton: {
-    marginHorizontal: wp(6),
-    marginTop: hp(6),
-    padding: wp(4),
-    backgroundColor: colors.teal,
-    borderRadius: wp(3),
-    alignItems: 'center',
-    shadowColor: colors.teal,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  upgradeButtonText: {
-    fontSize: fontSize(20),
-    fontFamily: fonts.bold,
-    color: colors.white,
+    fontFamily: fonts.regular,
+    textAlign: 'center',
   },
   terms: {
     fontSize: fontSize(14),
     fontFamily: fonts.regular,
-    color: colors.navy,
-    opacity: 0.5,
+    color: colors.sand,
     textAlign: 'center',
-    marginHorizontal: wp(6),
-    marginTop: hp(3),
   },
-  statusCard: {
-    margin: wp(6),
-    padding: wp(4),
-    backgroundColor: colors.lightGray,
-    borderRadius: wp(4),
-    alignItems: 'center',
-  },
-  statusTitle: {
-    fontSize: fontSize(20),
-    fontFamily: fonts.bold,
-    color: colors.teal,
-    marginBottom: hp(1),
-  },
-  statusDescription: {
-    fontSize: fontSize(16),
-    fontFamily: fonts.regular,
-    color: colors.navy,
-    opacity: 0.7,
-    textAlign: 'center',
-    marginBottom: hp(2),
-  },
-  exportButton: {
-    paddingVertical: hp(1),
-    paddingHorizontal: wp(4),
-    backgroundColor: colors.teal,
-    borderRadius: wp(2),
-  },
-  exportButtonText: {
-    fontSize: fontSize(14),
-    fontFamily: fonts.bold,
-    color: colors.white,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: hp(2),
-  },
-  compareButton: {
-    paddingVertical: hp(0.5),
-    paddingHorizontal: wp(3),
-    backgroundColor: colors.lightGray,
-    borderRadius: wp(2),
-  },
-  compareButtonText: {
-    fontSize: fontSize(14),
-    fontFamily: fonts.regular,
-    color: colors.teal,
-  },
-  comparisonModal: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: colors.white,
-    zIndex: 1000,
-  },
-  comparisonHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: wp(6),
-    borderBottomWidth: 1,
-    borderBottomColor: colors.lightGray,
-  },
-  comparisonTitle: {
-    fontSize: fontSize(24),
-    fontFamily: fonts.bold,
-    color: colors.navy,
-  },
-  closeButton: {
-    padding: wp(2),
-  },
-  closeButtonText: {
-    fontSize: fontSize(32),
-    fontFamily: fonts.regular,
-    color: colors.navy,
-  },
-  comparisonContent: {
-    flex: 1,
-  },
-  comparisonSection: {
-    padding: wp(6),
-  },
-  comparisonSectionTitle: {
-    fontSize: fontSize(20),
-    fontFamily: fonts.bold,
-    color: colors.navy,
-    marginBottom: hp(2),
-  },
-  premiumBadge: {
-    position: 'absolute',
-    top: -hp(2),
-    right: wp(6),
-    backgroundColor: colors.teal,
-    paddingVertical: hp(0.5),
-    paddingHorizontal: wp(3),
-    borderRadius: wp(2),
-    zIndex: 1,
-  } as ViewStyle,
-  premiumBadgeText: {
-    fontSize: fontSize(12),
-    fontFamily: fonts.bold,
-    color: colors.white,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    backgroundColor: colors.white,
-    borderTopLeftRadius: wp(8),
-    borderTopRightRadius: wp(8),
-    maxHeight: '90%',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: wp(6),
-    borderBottomWidth: 1,
-    borderBottomColor: colors.lightGray,
-  },
-  modalTitle: {
-    fontSize: fontSize(24),
-    fontFamily: fonts.bold,
-    color: colors.navy,
-  },
-  modalScroll: {
-    padding: wp(6),
-  },
-  planCard: {
-    backgroundColor: colors.white,
-    borderRadius: wp(4),
-    padding: wp(6),
-    marginBottom: hp(4),
-    shadowColor: colors.black,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  premiumPlanCard: {
-    borderWidth: 2,
-    borderColor: colors.teal,
-    position: 'relative',
-  },
-  planHeader: {
-    alignItems: 'center',
-    marginBottom: hp(3),
-  },
-  planName: {
-    fontSize: fontSize(24),
-    fontFamily: fonts.bold,
-    color: colors.navy,
-    marginBottom: hp(1),
-  },
-  planPrice: {
-    fontSize: fontSize(48),
-    fontFamily: fonts.black,
-    color: colors.navy,
-  },
-  planPeriod: {
-    fontSize: fontSize(16),
-    fontFamily: fonts.regular,
-    color: colors.navy,
-    opacity: 0.7,
-  },
-  featuresList: {
-    marginTop: hp(2),
-  },
-  featureRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: hp(2),
-  },
-  checkIcon: {
-    width: wp(5),
-    height: wp(5),
-    marginRight: wp(3),
-  },
-  featureText: {
-    fontSize: fontSize(16),
-    fontFamily: fonts.regular,
-    color: colors.navy,
-    flex: 1,
-  },
-  errorContainer: {
-    margin: wp(6),
-    padding: wp(4),
-    backgroundColor: colors.lightRed,
-    borderRadius: wp(2),
-  },
-  errorText: {
-    color: colors.white,
-    fontSize: fontSize(14),
-    fontFamily: fonts.regular,
-    textAlign: 'center',
+  premiumFeatureText: {
+    paddingHorizontal: wp(6),
+    paddingTop: hp(2),
   },
 });
 
