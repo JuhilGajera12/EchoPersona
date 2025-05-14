@@ -19,6 +19,7 @@ import Animated, {
   withSpring,
   useSharedValue,
 } from 'react-native-reanimated';
+import BootSplash from 'react-native-bootsplash';
 
 import DailyPromptScreen from './src/screens/DailyPromptScreen';
 import JournalScreen from './src/screens/JournalScreen';
@@ -29,7 +30,6 @@ import SettingsScreen from './src/screens/SettingsScreen';
 import {colors} from './src/constant/colors';
 import {icons} from './src/constant/icons';
 import {hp, wp} from './src/helpers/globalFunction';
-import SplashScreen from 'react-native-splash-screen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -154,9 +154,14 @@ const TabNavigator = memo(() => {
 
 const App = memo(() => {
   useEffect(() => {
-    setTimeout(() => {
-      SplashScreen.hide();
-    }, 0);
+    const init = async () => {
+      // …do multiple sync or async tasks
+    };
+
+    init().finally(async () => {
+      await BootSplash.hide({fade: true});
+      console.log('BootSplash has been hidden successfully');
+    });
   }, []);
 
   return (
