@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import {
   View,
   Text,
@@ -19,7 +19,10 @@ import {colors} from '../constant/colors';
 import {fonts} from '../constant/fonts';
 import {icons} from '../constant/icons';
 import {RootState} from '../store';
-import {setCurrentProfile, addHistoricalProfile} from '../store/slices/profileSlice';
+import {
+  setCurrentProfile,
+  addHistoricalProfile,
+} from '../store/slices/profileSlice';
 
 type RootStackParamList = {
   Settings: undefined;
@@ -35,16 +38,19 @@ interface PersonaProfile {
   lastUpdated: string;
 }
 
-const STATUS_BAR_HEIGHT = Platform.OS === 'android' ? StatusBar.currentHeight ?? 0 : 0;
+const STATUS_BAR_HEIGHT =
+  Platform.OS === 'android' ? StatusBar.currentHeight ?? 0 : 0;
 
 const ProfileScreen = () => {
   const navigation = useNavigation<NavigationProp>();
   const dispatch = useDispatch();
   const [isLoading, setIsLoading] = useState(true);
-  const fadeAnim = React.useRef(new Animated.Value(0)).current;
-  const slideAnim = React.useRef(new Animated.Value(50)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(50)).current;
 
-  const profile = useSelector((state: RootState) => state.profile.currentProfile);
+  const profile = useSelector(
+    (state: RootState) => state.profile.currentProfile,
+  );
   const isPremium = useSelector((state: RootState) => state.premium.isPremium);
 
   useEffect(() => {
@@ -78,17 +84,26 @@ const ProfileScreen = () => {
   const generateProfile = async () => {
     try {
       const mockProfile: PersonaProfile = {
-        summary: "You are a thoughtful and introspective individual who values personal growth and self-awareness. Your journal entries show a deep appreciation for life's meaningful moments and a desire to understand yourself better.",
-        traits: ['Introspective', 'Growth-oriented', 'Self-aware', 'Thoughtful', 'Curious'],
+        summary:
+          "You are a thoughtful and introspective individual who values personal growth and self-awareness. Your journal entries show a deep appreciation for life's meaningful moments and a desire to understand yourself better.",
+        traits: [
+          'Introspective',
+          'Growth-oriented',
+          'Self-aware',
+          'Thoughtful',
+          'Curious',
+        ],
         lastUpdated: new Date().toISOString(),
       };
 
       dispatch(setCurrentProfile(mockProfile));
-      dispatch(addHistoricalProfile({
-        summary: mockProfile.summary,
-        traits: mockProfile.traits,
-        timestamp: mockProfile.lastUpdated,
-      }));
+      dispatch(
+        addHistoricalProfile({
+          summary: mockProfile.summary,
+          traits: mockProfile.traits,
+          timestamp: mockProfile.lastUpdated,
+        }),
+      );
     } catch (error) {
       console.error('Error generating profile:', error);
     }
@@ -113,7 +128,11 @@ const ProfileScreen = () => {
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.white} />
 
-      <Animated.View style={[styles.header, {opacity: fadeAnim, transform: [{translateY: slideAnim}]}]}>
+      <Animated.View
+        style={[
+          styles.header,
+          {opacity: fadeAnim, transform: [{translateY: slideAnim}]},
+        ]}>
         <View style={styles.headerContent}>
           <View style={styles.headerTop}>
             <Text style={styles.title}>Who You Are Right Now</Text>
@@ -136,7 +155,10 @@ const ProfileScreen = () => {
               resizeMode="contain"
             />
             <Text style={styles.lastUpdated}>
-              Last updated: {profile?.lastUpdated ? new Date(profile.lastUpdated).toLocaleDateString() : 'Never'}
+              Last updated:{' '}
+              {profile?.lastUpdated
+                ? new Date(profile.lastUpdated).toLocaleDateString()
+                : 'Never'}
             </Text>
           </View>
         </View>
@@ -146,7 +168,11 @@ const ProfileScreen = () => {
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}>
-        <Animated.View style={[styles.summaryCard, {opacity: fadeAnim, transform: [{translateY: slideAnim}]}]}>
+        <Animated.View
+          style={[
+            styles.summaryCard,
+            {opacity: fadeAnim, transform: [{translateY: slideAnim}]},
+          ]}>
           <View style={styles.summaryHeader}>
             <Image
               source={icons.user}
@@ -186,7 +212,10 @@ const ProfileScreen = () => {
         </Animated.View>
 
         <TouchableOpacity
-          style={[styles.regenerateButton, !isPremium && styles.regenerateButtonDisabled]}
+          style={[
+            styles.regenerateButton,
+            !isPremium && styles.regenerateButtonDisabled,
+          ]}
           onPress={handleRegenerateProfile}
           disabled={!isPremium}
           activeOpacity={0.8}>

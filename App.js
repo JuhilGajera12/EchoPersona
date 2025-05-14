@@ -1,13 +1,24 @@
-import React, {useCallback, memo} from 'react';
+import React, {useCallback, memo, useEffect} from 'react';
 import {Provider} from 'react-redux';
 import {PersistGate} from 'redux-persist/integration/react';
 import {store, persistor} from './src/store';
 import {NavigationContainer} from '@react-navigation/native';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import {StyleSheet, SafeAreaView, StatusBar, Platform, Image, View, Pressable} from 'react-native';
-import Animated, {useAnimatedStyle, withSpring, useSharedValue} from 'react-native-reanimated';
-import {StripeProvider} from '@stripe/stripe-react-native';
+import {
+  StyleSheet,
+  SafeAreaView,
+  StatusBar,
+  Platform,
+  Image,
+  View,
+  Pressable,
+} from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  withSpring,
+  useSharedValue,
+} from 'react-native-reanimated';
 
 import DailyPromptScreen from './src/screens/DailyPromptScreen';
 import JournalScreen from './src/screens/JournalScreen';
@@ -18,6 +29,7 @@ import SettingsScreen from './src/screens/SettingsScreen';
 import {colors} from './src/constant/colors';
 import {icons} from './src/constant/icons';
 import {hp, wp} from './src/helpers/globalFunction';
+import SplashScreen from 'react-native-splash-screen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -29,7 +41,7 @@ const AnimatedTabBarIcon = memo(({focused, icon}) => {
   const scale = useSharedValue(1);
   const translateY = useSharedValue(0);
 
-  React.useEffect(() => {
+  useEffect(() => {
     scale.value = withSpring(focused ? 1.1 : 1, {damping: 10});
     translateY.value = withSpring(focused ? -2 : 0, {damping: 10});
   }, [focused]);
@@ -42,7 +54,10 @@ const AnimatedTabBarIcon = memo(({focused, icon}) => {
     <Animated.View style={[styles.tabIconContainer, animatedStyle]}>
       <Image
         source={icon}
-        style={[styles.tabIcon, {tintColor: focused ? colors.gold : colors.sand}]}
+        style={[
+          styles.tabIcon,
+          {tintColor: focused ? colors.gold : colors.sand},
+        ]}
         resizeMode="contain"
       />
     </Animated.View>
@@ -111,9 +126,13 @@ const TabNavigator = memo(() => {
     (name, component, icon) => (
       <Tab.Screen
         name={name}
-        component={props => <ScreenWrapper>{React.createElement(component, props)}</ScreenWrapper>}
+        component={props => (
+          <ScreenWrapper>{React.createElement(component, props)}</ScreenWrapper>
+        )}
         options={{
-          tabBarIcon: ({focused}) => <AnimatedTabBarIcon focused={focused} icon={icon} />,
+          tabBarIcon: ({focused}) => (
+            <AnimatedTabBarIcon focused={focused} icon={icon} />
+          ),
         }}
       />
     ),
@@ -133,15 +152,25 @@ const TabNavigator = memo(() => {
   );
 });
 
-const App = memo(() => (
-  <Provider store={store}>
-    <PersistGate loading={null} persistor={persistor}>
-      <StripeProvider publishableKey="pk_test_51RNvQYQSZX7Hq8sOpDlIl6uKkn3zcER58hey4MqboUmB8vj0VQHeDRmzUNBFs3ezPBm52HcAL4bV5XakToOWlV6Y00Is0BmnDP">
+const App = memo(() => {
+  useEffect(() => {
+    setTimeout(() => {
+      SplashScreen.hide();
+    }, 0);
+  }, []);
+
+  return (
+    <Provider store={store}>
+      <PersistGate loading={null} persistor={persistor}>
         <SafeAreaView style={styles.container}>
           <StatusBar barStyle="dark-content" translucent />
           <NavigationContainer>
             <Stack.Navigator>
-              <Stack.Screen name="MainTabs" component={TabNavigator} options={{headerShown: false}} />
+              <Stack.Screen
+                name="MainTabs"
+                component={TabNavigator}
+                options={{headerShown: false}}
+              />
               <Stack.Screen
                 name="Settings"
                 component={SettingsScreen}
@@ -150,10 +179,10 @@ const App = memo(() => (
             </Stack.Navigator>
           </NavigationContainer>
         </SafeAreaView>
-      </StripeProvider>
-    </PersistGate>
-  </Provider>
-));
+      </PersistGate>
+    </Provider>
+  );
+});
 
 const styles = StyleSheet.create({
   container: {

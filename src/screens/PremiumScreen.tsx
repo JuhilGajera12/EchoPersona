@@ -401,7 +401,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: wp(6),
   },
   plansContainer: {
-    paddingHorizontal: wp(6),
     paddingTop: hp(2),
   },
   planSelector: {
