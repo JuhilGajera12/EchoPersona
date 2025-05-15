@@ -21,6 +21,7 @@ import Animated, {
 import LoginScreen from '../screens/LoginScreen';
 import SignupScreen from '../screens/SignupScreen';
 import SettingsScreen from '../screens/SettingsScreen';
+import OnboardingScreen from '../screens/OnboardingScreen';
 import {colors} from '../constant/colors';
 import {icons} from '../constant/icons';
 import {hp, wp} from '../helpers/globalFunction';
@@ -182,6 +183,9 @@ const AuthNavigator: React.FC = () => {
   const [initializing, setInitializing] = useState(true);
   const dispatch = useDispatch();
   const {isAuthenticated} = useSelector((state: RootState) => state.auth);
+  const {hasCompletedOnboarding} = useSelector(
+    (state: RootState) => state.onboarding,
+  );
 
   useEffect(() => {
     const subscriber = auth().onAuthStateChanged(user => {
@@ -219,10 +223,19 @@ const AuthNavigator: React.FC = () => {
 
   return (
     <TabStack.Navigator
-      initialRouteName={isAuthenticated ? 'MainTabs' : 'Login'}
+      initialRouteName={
+        isAuthenticated
+          ? hasCompletedOnboarding
+            ? 'MainTabs'
+            : 'Onboarding'
+          : 'Login'
+      }
       screenOptions={{headerShown: false}}>
       {isAuthenticated ? (
         <>
+          {!hasCompletedOnboarding && (
+            <TabStack.Screen name="Onboarding" component={OnboardingScreen} />
+          )}
           <TabStack.Screen name="MainTabs" component={MainTabs} />
           <TabStack.Screen
             name="Settings"

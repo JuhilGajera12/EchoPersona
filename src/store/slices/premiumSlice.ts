@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import {createSlice, PayloadAction} from '@reduxjs/toolkit';
 
 export interface PremiumState {
   isPremium: boolean;
@@ -15,11 +15,11 @@ const premiumSlice = createSlice({
     setPremiumStatus: (state, action: PayloadAction<boolean>) => {
       state.isPremium = action.payload;
     },
-    clearSubscription: (state) => {
+    clearSubscription: state => {
       state.isPremium = false;
     },
   },
 });
 
-export const { setPremiumStatus, clearSubscription } = premiumSlice.actions;
-export default premiumSlice.reducer; 
+export const {setPremiumStatus, clearSubscription} = premiumSlice.actions;
+export default premiumSlice.reducer;

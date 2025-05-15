@@ -18,6 +18,7 @@ import {
   loginWithGoogle,
   clearError,
 } from '../store/slices/authSlice';
+import {resetOnboarding} from '../store/slices/onboardingSlice';
 import {colors} from '../constant/colors';
 import {fonts} from '../constant/fonts';
 import {icons} from '../constant/icons';
@@ -107,7 +108,7 @@ const SignupScreen = () => {
       setWarning('Please enter your email.');
       return;
     }
-    
+
     if (!password) {
       setWarning('Please enter a password.');
       return;
@@ -117,15 +118,15 @@ const SignupScreen = () => {
       setWarning('Password must be at least 6 characters.');
       return;
     }
-    
+
     if (password !== confirmPassword) {
       setWarning('Passwords do not match.');
       return;
     }
 
     try {
+      dispatch(resetOnboarding());
       await dispatch(signupWithEmail({email, password}));
-      // Navigation will be handled automatically by AuthNavigator
     } catch (err) {
       console.error('Email signup error:', err);
     }
@@ -133,8 +134,8 @@ const SignupScreen = () => {
 
   const handleGoogleSignup = async () => {
     try {
+      dispatch(resetOnboarding());
       await dispatch(loginWithGoogle());
-      // Navigation will be handled automatically by AuthNavigator
     } catch (err) {
       console.error('Google signup error:', err);
     }

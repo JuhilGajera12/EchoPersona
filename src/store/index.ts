@@ -16,6 +16,7 @@ import journalReducer, {JournalState} from './slices/journalSlice';
 import premiumReducer, {PremiumState} from './slices/premiumSlice';
 import promptReducer, {PromptState} from './slices/promptSlice';
 import authReducer, {AuthState} from './slices/authSlice';
+import onboardingReducer, {OnboardingState} from './slices/onboardingSlice';
 
 export interface RootStatetype {
   profile: ProfileState;
@@ -23,12 +24,13 @@ export interface RootStatetype {
   premium: PremiumState;
   prompt: PromptState;
   auth: AuthState;
+  onboarding: OnboardingState;
 }
 
 const persistConfig = {
   key: 'root',
   storage: AsyncStorage,
-  whitelist: ['profile', 'journal', 'premium', 'prompt', 'auth'],
+  whitelist: ['profile', 'journal', 'premium', 'prompt', 'auth', 'onboarding'],
 };
 
 const rootReducer = combineReducers({
@@ -37,6 +39,7 @@ const rootReducer = combineReducers({
   premium: premiumReducer,
   prompt: promptReducer,
   auth: authReducer,
+  onboarding: onboardingReducer,
 });
 
 const persistedReducer = persistReducer<RootStatetype>(
