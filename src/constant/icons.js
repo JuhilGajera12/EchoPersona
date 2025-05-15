@@ -1,5 +1,3 @@
-import {Settings} from 'react-native';
-
 export const icons = {
   pencil: require('../../assets/images/pencil.png'),
   evolution: require('../../assets/images/evolution.png'),
@@ -16,4 +14,8 @@ export const icons = {
   setting: require('../../assets/images/setting.png'),
   close: require('../../assets/images/close.png'),
   calendar: require('../../assets/images/calendar.png'),
+  lock: require('../../assets/images/lock.png'),
+  visible: require('../../assets/images/visible.png'),
+  inVisible: require('../../assets/images/inVisible.png'),
+  warning: require('../../assets/images/warning.png'),
 };

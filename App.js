@@ -29,7 +29,8 @@ import PremiumScreen from './src/screens/PremiumScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import {colors} from './src/constant/colors';
 import {icons} from './src/constant/icons';
-import {hp, wp} from './src/helpers/globalFunction';
+import {hp, navigationRef, wp} from './src/helpers/globalFunction';
+import LoginScreen from './src/screens/LoginScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -169,8 +170,13 @@ const App = memo(() => {
       <PersistGate loading={null} persistor={persistor}>
         <SafeAreaView style={styles.container}>
           <StatusBar barStyle="dark-content" translucent />
-          <NavigationContainer>
-            <Stack.Navigator>
+          <NavigationContainer ref={navigationRef}>
+            <Stack.Navigator initialRouteName="Login">
+              <Stack.Screen
+                name="Login"
+                component={LoginScreen}
+                options={{headerShown: false}}
+              />
               <Stack.Screen
                 name="MainTabs"
                 component={TabNavigator}

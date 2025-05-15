@@ -270,6 +270,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize(32),
     fontFamily: fonts.black,
     color: colors.black,
+    width: wp(80),
   },
   settingsButton: {
     padding: wp(2),

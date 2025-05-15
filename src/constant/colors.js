@@ -5,4 +5,5 @@ export const colors = {
   gold: '#EFBF04',
   darkGray: '#F5F5F5',
   sand: '#AF9F84',
+  error: '#FF2C2C',
 };

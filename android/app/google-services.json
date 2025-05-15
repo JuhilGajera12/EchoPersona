@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "320653206255",
+    "project_id": "echopersona-bc6de",
+    "storage_bucket": "echopersona-bc6de.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:320653206255:android:16036311fe9385852b711a",
+        "android_client_info": {
+          "package_name": "com.echopersona"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "320653206255-khvf38flfhoc11gsg1dq4togsikhoshs.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAOCxoPXER3ShV3MwiWxtV3jFF4D11B278"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "320653206255-khvf38flfhoc11gsg1dq4togsikhoshs.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
