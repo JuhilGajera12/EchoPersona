@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import {createSlice, PayloadAction} from '@reduxjs/toolkit';
 
 interface PersonaProfile {
   summary: string;
@@ -31,17 +31,17 @@ const profileSlice = createSlice({
     },
     addHistoricalProfile: (state, action: PayloadAction<HistoricalProfile>) => {
       state.historicalProfiles.unshift(action.payload);
-      // Keep only last 10 profiles
       if (state.historicalProfiles.length > 10) {
         state.historicalProfiles = state.historicalProfiles.slice(0, 10);
       }
     },
-    clearProfile: (state) => {
+    clearProfile: state => {
       state.currentProfile = null;
       state.historicalProfiles = [];
     },
   },
 });
 
-export const { setCurrentProfile, addHistoricalProfile, clearProfile } = profileSlice.actions;
-export default profileSlice.reducer; 
+export const {setCurrentProfile, addHistoricalProfile, clearProfile} =
+  profileSlice.actions;
+export default profileSlice.reducer;

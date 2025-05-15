@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "320653206255-32k4qevn6o3fgnlmnt6b3v75jqj18ng8.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.echopersona",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
           "client_id": "320653206255-khvf38flfhoc11gsg1dq4togsikhoshs.apps.googleusercontent.com",
           "client_type": 3
         }

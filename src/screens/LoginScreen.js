@@ -12,33 +12,40 @@ import {
   Image,
 } from 'react-native';
 import {colors} from '../constant/colors';
-import {commonAction, fontSize, hp, wp} from '../helpers/globalFunction';
+import {fontSize, hp, wp} from '../helpers/globalFunction';
 import {fonts} from '../constant/fonts';
 import {icons} from '../constant/icons';
 import {GoogleSignin} from '@react-native-google-signin/google-signin';
-import {
-  createUserWithEmailAndPassword,
-  getAuth,
-  GoogleAuthProvider,
-  signInWithCredential,
-  signInWithEmailAndPassword,
-} from '@react-native-firebase/auth';
 import {useNavigation} from '@react-navigation/native';
 import Animated, {
   Easing,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
+import {useDispatch, useSelector} from 'react-redux';
+import {
+  loginWithEmail,
+  loginWithGoogle,
+  clearError,
+} from '../store/slices/authSlice';
 
 const LoginScreen = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [emailLoading, setEmailLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
   const [warning, setWarning] = useState('');
 
   const navigation = useNavigation();
+  const dispatch = useDispatch();
+
+  const {isLoading, error} = useSelector(state => state.auth);
+
+  useEffect(() => {
+    GoogleSignin.configure({
+      webClientId:
+        '320653206255-khvf38flfhoc11gsg1dq4togsikhoshs.apps.googleusercontent.com',
+    });
+  }, []);
 
   const fadeIn = useSharedValue(0);
   const slideUp = useSharedValue(50);
@@ -54,25 +61,18 @@ const LoginScreen = () => {
     });
   }, [fadeIn, slideUp]);
 
+  useEffect(() => {
+    if (error) {
+      setWarning(error);
+    }
+  }, [error]);
+
   const handleGoogleLogin = async () => {
-    setGoogleLoading(true);
     try {
-      GoogleSignin.configure();
-      await GoogleSignin.hasPlayServices({showPlayServicesUpdateDialog: true});
-      const signInResult = await GoogleSignin.signIn();
-
-      const idToken = signInResult?.idToken;
-      if (!idToken) throw new Error('No ID token found');
-
-      const googleCredential = GoogleAuthProvider.credential(idToken);
-      await signInWithCredential(getAuth(), googleCredential);
-
-      commonAction('MainTabs');
+      await dispatch(loginWithGoogle());
+      // Navigation will be handled automatically by AuthNavigator
     } catch (err) {
       console.error('Google login error:', err);
-      setWarning('Google sign-in failed. Please try again.');
-    } finally {
-      setGoogleLoading(false);
     }
   };
 
@@ -83,6 +83,7 @@ const LoginScreen = () => {
       setWarning('That email address is invalid!');
     } else {
       setWarning('');
+      dispatch(clearError());
     }
   };
 
@@ -96,6 +97,7 @@ const LoginScreen = () => {
         );
       } else {
         setWarning('');
+        dispatch(clearError());
       }
     } else {
       setWarning('');
@@ -103,34 +105,26 @@ const LoginScreen = () => {
   };
 
   const handleEmailLogin = async () => {
-    setEmailLoading(true);
-    try {
-      await createUserWithEmailAndPassword(getAuth(), email, password);
-      commonAction('MainTabs');
-    } catch (error) {
-      if (error.code === 'auth/email-already-in-use') {
-        try {
-          await signInWithEmailAndPassword(getAuth(), email, password);
-          commonAction('MainTabs');
-        } catch (signInError) {
-          if (signInError.code === 'auth/wrong-password') {
-            setWarning('Wrong password. Please try again.');
-          } else if (signInError.code === 'auth/user-not-found') {
-            setWarning('No account found with this email.');
-          } else {
-            setWarning('Sign-in failed. Please check your credentials.');
-          }
-        }
-      } else if (error.code === 'auth/invalid-email') {
-        setWarning('That email address is invalid!');
-      } else if (error.code === 'auth/weak-password') {
-        setWarning('Password should be at least 6 characters.');
-      } else {
-        setWarning('Something went wrong. Please try again.');
-      }
-    } finally {
-      setEmailLoading(false);
+    if (!email) {
+      setWarning('Please enter your email.');
+      return;
     }
+
+    if (!password || password.length < 6) {
+      setWarning('Please enter a valid password (at least 6 characters).');
+      return;
+    }
+
+    try {
+      await dispatch(loginWithEmail({email, password}));
+      // Navigation will be handled automatically by AuthNavigator
+    } catch (err) {
+      console.error('Email login error:', err);
+    }
+  };
+
+  const navigateToSignup = () => {
+    navigation.navigate('Signup');
   };
 
   return (
@@ -180,6 +174,7 @@ const LoginScreen = () => {
                   placeholderTextColor={colors.black}
                   onChangeText={handleEmailChange}
                   keyboardType="email-address"
+                  autoCapitalize="none"
                 />
               </View>
             </View>
@@ -224,9 +219,9 @@ const LoginScreen = () => {
             <TouchableOpacity
               style={[styles.loginButton]}
               onPress={handleEmailLogin}
-              disabled={emailLoading || googleLoading}
+              disabled={isLoading}
               accessibilityLabel="Sign in button">
-              {emailLoading ? (
+              {isLoading ? (
                 <ActivityIndicator color={colors.white} size="small" />
               ) : (
                 <Text style={styles.loginButtonText}>Sign In</Text>
@@ -242,15 +237,17 @@ const LoginScreen = () => {
             <TouchableOpacity
               style={styles.socialButton}
               onPress={handleGoogleLogin}
-              disabled={emailLoading || googleLoading}
+              disabled={isLoading}
               accessibilityLabel="Continue with Google">
-              {googleLoading ? (
+              {isLoading ? (
                 <ActivityIndicator color={colors.black} size="small" />
               ) : (
                 <>
                   <Image
-                    style={{height: wp(4.26), width: wp(4.26)}}
+                    style={styles.googleIcon}
                     resizeMode="contain"
+                    source={icons.google}
+                    tintColor={colors.white}
                   />
                   <Text style={styles.socialButtonText}>
                     Continue with Google
@@ -265,7 +262,7 @@ const LoginScreen = () => {
               Don't have an account?{' '}
               <Text
                 style={styles.linkText}
-                onPress={() => navigation.navigate('Signup')}
+                onPress={navigateToSignup}
                 accessibilityLabel="Navigate to sign up">
                 Sign Up
               </Text>
@@ -447,6 +444,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: wp(2.66),
+  },
+  googleIcon: {
+    height: wp(5.33),
+    width: wp(5.33),
   },
 });
 

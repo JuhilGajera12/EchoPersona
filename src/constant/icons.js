@@ -18,4 +18,5 @@ export const icons = {
   visible: require('../../assets/images/visible.png'),
   inVisible: require('../../assets/images/inVisible.png'),
   warning: require('../../assets/images/warning.png'),
+  google: require('../../assets/images/google.png'),
 };

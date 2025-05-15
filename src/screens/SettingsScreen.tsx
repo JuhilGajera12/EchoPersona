@@ -5,75 +5,64 @@ import {
   StyleSheet,
   TouchableOpacity,
   Switch,
-  Alert,
   ScrollView,
   Image,
   Platform,
   StatusBar,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
-import {RootState} from '../store';
+import {RootState, AppDispatch} from '../store';
 import {clearProfile} from '../store/slices/profileSlice';
 import {clearEntries} from '../store/slices/journalSlice';
 import {clearSubscription} from '../store/slices/premiumSlice';
 import {clearPromptHistory} from '../store/slices/promptSlice';
+import {logout, deleteAccount} from '../store/slices/authSlice';
 import {colors} from '../constant/colors';
 import {fonts} from '../constant/fonts';
 import {icons} from '../constant/icons';
 import {fontSize, hp, wp} from '../helpers/globalFunction';
+import ConfirmationModal from '../components/ConfirmationModal';
 
-const STATUS_BAR_HEIGHT = Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0;
+const STATUS_BAR_HEIGHT =
+  Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0;
 
 const SettingsScreen = () => {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const [isDarkMode, setIsDarkMode] = useState(false);
+
+  const [logoutModalVisible, setLogoutModalVisible] = useState(false);
+  const [deleteAccountModalVisible, setDeleteAccountModalVisible] =
+    useState(false);
+
   const isPremium = useSelector((state: RootState) => state.premium.isPremium);
+  const auth = useSelector((state: RootState) => state.auth);
+  const isLoading = auth.isLoading;
 
   const handleLogout = () => {
-    Alert.alert('Logout', 'Are you sure you want to logout?', [
-      {
-        text: 'Cancel',
-        style: 'cancel',
-      },
-      {
-        text: 'Logout',
-        style: 'destructive',
-        onPress: () => {
-          dispatch(clearProfile());
-          dispatch(clearEntries());
-          dispatch(clearSubscription());
-          dispatch(clearPromptHistory());
-        },
-      },
-    ]);
+    setLogoutModalVisible(true);
+  };
+
+  const confirmLogout = () => {
+    dispatch(logout());
+    dispatch(clearProfile());
+    dispatch(clearEntries());
+    dispatch(clearSubscription());
+    dispatch(clearPromptHistory());
   };
 
   const handleDeleteAccount = () => {
-    Alert.alert(
-      'Delete Account',
-      'Are you sure you want to delete your account? This action cannot be undone.',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => {
-            dispatch(clearProfile());
-            dispatch(clearEntries());
-            dispatch(clearSubscription());
-            dispatch(clearPromptHistory());
-          },
-        },
-      ],
-    );
+    setDeleteAccountModalVisible(true);
   };
 
-  const handleExportData = () => {
-    Alert.alert('Success', 'Your data has been exported successfully.');
+  const confirmDeleteAccount = () => {
+    dispatch(deleteAccount());
+    dispatch(clearProfile());
+    dispatch(clearEntries());
+    dispatch(clearSubscription());
+    dispatch(clearPromptHistory());
   };
+
+  const handleExportData = () => {};
 
   const renderSettingItem = (
     icon: any,
@@ -85,9 +74,13 @@ const SettingsScreen = () => {
     <TouchableOpacity
       style={[styles.settingItem, onPress && styles.settingItemPressable]}
       onPress={onPress}
-      disabled={!onPress}>
+      disabled={!onPress || isLoading}>
       <View style={styles.settingInfo}>
-        <View style={[styles.iconContainer, isDanger && styles.dangerIconContainer]}>
+        <View
+          style={[
+            styles.iconContainer,
+            isDanger && styles.dangerIconContainer,
+          ]}>
           <Image
             source={icon}
             style={[styles.settingIcon, isDanger && styles.dangerIcon]}
@@ -106,12 +99,21 @@ const SettingsScreen = () => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.white} />
-      <View style={[styles.header, {paddingTop: Platform.OS === 'ios' ? hp(6) : STATUS_BAR_HEIGHT + hp(2)}]}>
+      <View
+        style={[
+          styles.header,
+          {
+            paddingTop:
+              Platform.OS === 'ios' ? hp(6) : STATUS_BAR_HEIGHT + hp(2),
+          },
+        ]}>
         <Text style={styles.headerTitle}>Settings</Text>
         <Text style={styles.headerSubtitle}>Customize your experience</Text>
       </View>
 
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}>
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Appearance</Text>
           {renderSettingItem(
@@ -149,7 +151,11 @@ const SettingsScreen = () => {
             icons.premium,
             'Premium Status',
             <View style={[styles.statusBadge, isPremium && styles.activeBadge]}>
-              <Text style={[styles.statusText, isPremium && styles.activeStatusText]}>
+              <Text
+                style={[
+                  styles.statusText,
+                  isPremium && styles.activeStatusText,
+                ]}>
                 {isPremium ? 'Active' : 'Inactive'}
               </Text>
             </View>,
@@ -159,6 +165,7 @@ const SettingsScreen = () => {
         <TouchableOpacity
           style={styles.logoutButton}
           onPress={handleLogout}
+          disabled={isLoading}
           activeOpacity={0.8}>
           <Image
             source={icons.setting}
@@ -171,6 +178,31 @@ const SettingsScreen = () => {
 
         <Text style={styles.version}>Version 1.0.0</Text>
       </ScrollView>
+
+      {/* Logout Confirmation Modal */}
+      <ConfirmationModal
+        visible={logoutModalVisible}
+        title="Logout"
+        message="Are you sure you want to logout from your account?"
+        confirmText="Logout"
+        cancelText="Cancel"
+        onConfirm={confirmLogout}
+        onCancel={() => setLogoutModalVisible(false)}
+        isLoading={isLoading}
+      />
+
+      {/* Delete Account Confirmation Modal */}
+      <ConfirmationModal
+        visible={deleteAccountModalVisible}
+        title="Delete Account"
+        message="Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently lost."
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={confirmDeleteAccount}
+        onCancel={() => setDeleteAccountModalVisible(false)}
+        isLoading={isLoading}
+        isDanger={true}
+      />
     </View>
   );
 };

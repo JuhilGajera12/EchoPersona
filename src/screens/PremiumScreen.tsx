@@ -130,7 +130,6 @@ const PremiumScreen = () => {
       dispatch(setPremiumStatus(true));
     } catch (error) {
       setError('Payment failed. Please try again.');
-      console.error('Error upgrading to premium:', error);
     } finally {
       setIsLoading(false);
     }
@@ -562,7 +561,6 @@ const styles = StyleSheet.create({
     marginBottom: hp(0.5),
   },
   premiumFeatureTitle: {
-    // color: colors.white,
     fontSize: fontSize(16),
     fontFamily: fonts.bold,
     color: colors.black,

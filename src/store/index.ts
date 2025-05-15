@@ -15,14 +15,14 @@ import profileReducer, {ProfileState} from './slices/profileSlice';
 import journalReducer, {JournalState} from './slices/journalSlice';
 import premiumReducer, {PremiumState} from './slices/premiumSlice';
 import promptReducer, {PromptState} from './slices/promptSlice';
-import authReducer from './slices/authSlice';
+import authReducer, {AuthState} from './slices/authSlice';
 
 export interface RootStatetype {
   profile: ProfileState;
   journal: JournalState;
   premium: PremiumState;
   prompt: PromptState;
-  auth: any; // Assuming the auth slice is of type any
+  auth: AuthState;
 }
 
 const persistConfig = {
@@ -49,7 +49,28 @@ export const store = configureStore({
   middleware: getDefaultMiddleware =>
     getDefaultMiddleware({
       serializableCheck: {
-        ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
+        ignoredActions: [
+          FLUSH, 
+          REHYDRATE, 
+          PAUSE, 
+          PERSIST, 
+          PURGE, 
+          REGISTER,
+          'auth/loginWithGoogle/pending',
+          'auth/loginWithGoogle/fulfilled',
+          'auth/loginWithGoogle/rejected',
+          'auth/loginWithEmail/pending',
+          'auth/loginWithEmail/fulfilled',
+          'auth/loginWithEmail/rejected',
+          'auth/signupWithEmail/pending',
+          'auth/signupWithEmail/fulfilled',
+          'auth/signupWithEmail/rejected',
+          'auth/logout/pending',
+          'auth/logout/fulfilled',
+          'auth/logout/rejected',
+        ],
+        // Ignore Firebase user objects in Redux state
+        ignoredPaths: ['auth.user'],
       },
     }),
 });

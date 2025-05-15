@@ -75,7 +75,6 @@ const ProfileScreen = () => {
         await generateProfile();
       }
     } catch (error) {
-      console.error('Error loading profile:', error);
     } finally {
       setIsLoading(false);
     }
@@ -104,9 +103,7 @@ const ProfileScreen = () => {
           timestamp: mockProfile.lastUpdated,
         }),
       );
-    } catch (error) {
-      console.error('Error generating profile:', error);
-    }
+    } catch (error) {}
   };
 
   const handleRegenerateProfile = async () => {
