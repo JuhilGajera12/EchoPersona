@@ -10,6 +10,7 @@ import {
   Platform,
   SafeAreaView,
   Image,
+  ScrollView,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {RootState, AppDispatch} from '../store';
@@ -38,6 +39,9 @@ const SignupScreen = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [warning, setWarning] = useState('');
+  const [isEmailLoading, setIsEmailLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+
   const navigation = useNavigation();
   const dispatch = useDispatch<AppDispatch>();
 
@@ -125,183 +129,221 @@ const SignupScreen = () => {
     }
 
     try {
+      setIsEmailLoading(true);
       dispatch(resetOnboarding());
       await dispatch(signupWithEmail({email, password}));
     } catch (err) {
       console.error('Email signup error:', err);
+    } finally {
+      setIsEmailLoading(false);
     }
   };
 
   const handleGoogleSignup = async () => {
     try {
+      setIsGoogleLoading(true);
       dispatch(resetOnboarding());
       await dispatch(loginWithGoogle());
     } catch (err) {
       console.error('Google signup error:', err);
+    } finally {
+      setIsGoogleLoading(false);
     }
+  };
+
+  const handleFacebookSignup = () => {
+    // Facebook signup implementation to be added later
+    console.log('Facebook signup');
   };
 
   const navigateToLogin = () => {
     navigation.navigate('Login' as never);
   };
 
+  const isAnyLoading = isEmailLoading || isGoogleLoading;
+
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <Animated.View
-          style={[
-            styles.content,
-            {
-              opacity: fadeIn,
-              transform: [{translateY: slideUp}],
-            },
-          ]}>
-          <View style={styles.header}>
-            <Text style={styles.title}>Create Account</Text>
-            <Text style={styles.subtitle}>Sign up to get started</Text>
-          </View>
-
-          {warning && (
-            <View style={styles.errorView}>
-              <Image
-                source={icons?.warning}
-                style={styles.errorIcon}
-                resizeMode="contain"
-                tintColor={colors.error}
-              />
-              <Text style={[styles.subtitle, styles.errorText]}>{warning}</Text>
+        <ScrollView showsVerticalScrollIndicator={false}>
+          <Animated.View
+            style={[
+              styles.content,
+              {
+                opacity: fadeIn,
+                transform: [{translateY: slideUp}],
+              },
+            ]}>
+            <View style={styles.header}>
+              <Text style={styles.title}>Create Account</Text>
+              <Text style={styles.subtitle}>Sign up to get started</Text>
             </View>
-          )}
 
-          <View style={styles.form}>
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Email</Text>
-              <View style={styles.inputWrapper}>
+            {warning && (
+              <View style={styles.errorView}>
                 <Image
-                  source={icons?.email}
-                  style={styles.inputIcon}
+                  source={icons?.warning}
+                  style={styles.errorIcon}
                   resizeMode="contain"
+                  tintColor={colors.error}
                 />
-                <TextInput
-                  value={email}
-                  style={styles.input}
-                  placeholder="Enter your email"
-                  placeholderTextColor={colors.black}
-                  onChangeText={handleEmailChange}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                />
+                <Text style={[styles.subtitle, styles.errorText]}>
+                  {warning}
+                </Text>
               </View>
-            </View>
+            )}
 
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Password</Text>
-              <View style={styles.inputWrapper}>
-                <Image
-                  style={styles.inputIcon}
-                  resizeMode="contain"
-                  source={icons?.lock}
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter your password"
-                  placeholderTextColor={colors.black}
-                  value={password}
-                  onChangeText={handlePasswordChange}
-                  secureTextEntry={!showPassword}
-                />
-                <TouchableOpacity
-                  style={styles.eyeIcon}
-                  onPress={() => setShowPassword(!showPassword)}>
+            <View style={styles.form}>
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Email</Text>
+                <View style={styles.inputWrapper}>
                   <Image
+                    source={icons?.email}
                     style={styles.inputIcon}
-                    source={showPassword ? icons.visible : icons.inVisible}
                     resizeMode="contain"
                   />
-                </TouchableOpacity>
+                  <TextInput
+                    value={email}
+                    style={styles.input}
+                    placeholder="Enter your email"
+                    placeholderTextColor={colors.black}
+                    onChangeText={handleEmailChange}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                  />
+                </View>
               </View>
-            </View>
 
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Confirm Password</Text>
-              <View style={styles.inputWrapper}>
-                <Image
-                  style={styles.inputIcon}
-                  resizeMode="contain"
-                  source={icons?.lock}
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Confirm your password"
-                  placeholderTextColor={colors.black}
-                  value={confirmPassword}
-                  onChangeText={handleConfirmPasswordChange}
-                  secureTextEntry={!showConfirmPassword}
-                />
-                <TouchableOpacity
-                  style={styles.eyeIcon}
-                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Password</Text>
+                <View style={styles.inputWrapper}>
                   <Image
                     style={styles.inputIcon}
-                    source={
-                      showConfirmPassword ? icons.visible : icons.inVisible
-                    }
                     resizeMode="contain"
+                    source={icons?.lock}
                   />
-                </TouchableOpacity>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Enter your password"
+                    placeholderTextColor={colors.black}
+                    value={password}
+                    onChangeText={handlePasswordChange}
+                    secureTextEntry={!showPassword}
+                  />
+                  <TouchableOpacity
+                    style={styles.eyeIcon}
+                    onPress={() => setShowPassword(!showPassword)}>
+                    <Image
+                      style={styles.inputIcon}
+                      source={showPassword ? icons.visible : icons.inVisible}
+                      resizeMode="contain"
+                    />
+                  </TouchableOpacity>
+                </View>
               </View>
-            </View>
 
-            <TouchableOpacity
-              style={styles.signupButton}
-              onPress={handleSignup}
-              disabled={isLoading}>
-              {isLoading ? (
-                <ActivityIndicator color={colors.white} size="small" />
-              ) : (
-                <Text style={styles.signupButtonText}>Sign Up</Text>
-              )}
-            </TouchableOpacity>
-
-            <View style={styles.divider}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>or continue with</Text>
-              <View style={styles.dividerLine} />
-            </View>
-
-            <TouchableOpacity
-              style={styles.socialButton}
-              onPress={handleGoogleSignup}
-              disabled={isLoading}>
-              {isLoading ? (
-                <ActivityIndicator color={colors.black} size="small" />
-              ) : (
-                <>
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Confirm Password</Text>
+                <View style={styles.inputWrapper}>
                   <Image
-                    style={styles.googleIcon}
+                    style={styles.inputIcon}
                     resizeMode="contain"
-                    source={icons.google}
+                    source={icons?.lock}
+                  />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Confirm your password"
+                    placeholderTextColor={colors.black}
+                    value={confirmPassword}
+                    onChangeText={handleConfirmPasswordChange}
+                    secureTextEntry={!showConfirmPassword}
+                  />
+                  <TouchableOpacity
+                    style={styles.eyeIcon}
+                    onPress={() =>
+                      setShowConfirmPassword(!showConfirmPassword)
+                    }>
+                    <Image
+                      style={styles.inputIcon}
+                      source={
+                        showConfirmPassword ? icons.visible : icons.inVisible
+                      }
+                      resizeMode="contain"
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <TouchableOpacity
+                style={[
+                  styles.button,
+                  styles.primaryButton,
+                  isAnyLoading && !isEmailLoading && styles.buttonDisabled,
+                ]}
+                onPress={handleSignup}
+                disabled={isAnyLoading}>
+                {isEmailLoading ? (
+                  <ActivityIndicator color={colors.white} size="small" />
+                ) : (
+                  <Text style={styles.buttonText}>Sign Up</Text>
+                )}
+              </TouchableOpacity>
+
+              <View style={styles.divider}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>or continue with</Text>
+                <View style={styles.dividerLine} />
+              </View>
+
+              <View style={styles.socialButtonsContainer}>
+                <TouchableOpacity
+                  style={[
+                    styles.button,
+                    styles.socialButton,
+                    isAnyLoading && !isGoogleLoading && styles.buttonDisabled,
+                  ]}
+                  onPress={handleGoogleSignup}
+                  disabled={isAnyLoading}>
+                  {isGoogleLoading ? (
+                    <ActivityIndicator color={colors.white} size="small" />
+                  ) : (
+                    <>
+                      <Image
+                        style={styles.socialIcon}
+                        resizeMode="contain"
+                        source={icons.google}
+                        tintColor={colors.white}
+                      />
+                      <Text style={styles.buttonText}>
+                        Continue with Google
+                      </Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.button,
+                    styles.socialButton,
+                    styles.facebookButton,
+                    isAnyLoading && styles.buttonDisabled,
+                  ]}
+                  onPress={handleFacebookSignup}
+                  disabled={isAnyLoading}>
+                  <Image
+                    style={styles.socialIcon}
+                    resizeMode="contain"
+                    source={icons.facebook}
                     tintColor={colors.white}
                   />
-                  <Text style={styles.socialButtonText}>
-                    Continue with Google
-                  </Text>
-                </>
-              )}
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>
-              Already have an account?{' '}
-              <Text style={styles.linkText} onPress={navigateToLogin}>
-                Sign In
-              </Text>
-            </Text>
-          </View>
-        </Animated.View>
+                  <Text style={styles.buttonText}>Continue with Facebook</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Animated.View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -318,10 +360,11 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: wp(6.4),
+    paddingBottom: hp(2),
   },
   header: {
-    marginTop: hp(8.92),
-    marginBottom: hp(4.92),
+    marginTop: hp(6),
+    marginBottom: hp(3),
     alignItems: 'center',
   },
   title: {
@@ -372,20 +415,20 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    padding: wp(5.33),
+    padding: wp(4.26),
     paddingLeft: 0,
     fontSize: fontSize(14),
     color: colors.black,
     fontFamily: fonts.regular,
   },
   eyeIcon: {
-    padding: wp(5.33),
+    padding: wp(4.26),
   },
-  signupButton: {
-    backgroundColor: colors.black,
+  button: {
     borderRadius: wp(3),
     padding: wp(4.26),
     alignItems: 'center',
+    justifyContent: 'center',
     shadowColor: colors.black,
     shadowOffset: {
       width: 0,
@@ -394,9 +437,16 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 5,
     elevation: 8,
+    flexDirection: 'row',
     marginTop: hp(2),
   },
-  signupButtonText: {
+  primaryButton: {
+    backgroundColor: colors.black,
+  },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
+  buttonText: {
     color: colors.white,
     fontSize: fontSize(16),
     fontFamily: fonts.bold,
@@ -404,7 +454,7 @@ const styles = StyleSheet.create({
   divider: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: hp(3.94),
+    marginVertical: hp(3),
   },
   dividerLine: {
     flex: 1,
@@ -417,31 +467,25 @@ const styles = StyleSheet.create({
     fontSize: fontSize(14),
     fontFamily: fonts.regular,
   },
-  socialButton: {
-    flexDirection: 'row',
-    backgroundColor: colors.gold,
-    borderRadius: wp(3),
-    paddingVertical: wp(4.26),
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: colors.black,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: wp(3),
-    elevation: 5,
+  socialButtonsContainer: {
+    gap: hp(2),
   },
-  socialButtonText: {
-    marginLeft: 12,
-    color: colors.white,
-    fontSize: fontSize(16),
-    fontFamily: fonts.bold,
+  socialButton: {
+    backgroundColor: colors.gold,
+    marginTop: 0,
+  },
+  facebookButton: {
+    backgroundColor: '#1877F2', // Facebook blue
+  },
+  socialIcon: {
+    height: wp(5.33),
+    width: wp(5.33),
+    marginRight: wp(3),
   },
   footer: {
-    paddingBottom: hp(4.92),
+    paddingVertical: hp(4),
     alignItems: 'center',
+    marginTop: hp(2),
   },
   footerText: {
     fontSize: fontSize(14),

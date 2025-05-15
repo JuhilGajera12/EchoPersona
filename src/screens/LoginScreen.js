@@ -34,11 +34,13 @@ const LoginScreen = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [warning, setWarning] = useState('');
+  const [isEmailLoading, setIsEmailLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   const navigation = useNavigation();
   const dispatch = useDispatch();
 
-  const {isLoading, error} = useSelector(state => state.auth);
+  const {error} = useSelector(state => state.auth);
 
   useEffect(() => {
     GoogleSignin.configure({
@@ -69,10 +71,13 @@ const LoginScreen = () => {
 
   const handleGoogleLogin = async () => {
     try {
+      setIsGoogleLoading(true);
       await dispatch(loginWithGoogle());
       // Navigation will be handled automatically by AuthNavigator
     } catch (err) {
       console.error('Google login error:', err);
+    } finally {
+      setIsGoogleLoading(false);
     }
   };
 
@@ -116,16 +121,26 @@ const LoginScreen = () => {
     }
 
     try {
+      setIsEmailLoading(true);
       await dispatch(loginWithEmail({email, password}));
       // Navigation will be handled automatically by AuthNavigator
     } catch (err) {
       console.error('Email login error:', err);
+    } finally {
+      setIsEmailLoading(false);
     }
+  };
+
+  const handleFacebookLogin = () => {
+    // Facebook login implementation to be added later
+    console.log('Facebook login');
   };
 
   const navigateToSignup = () => {
     navigation.navigate('Signup');
   };
+
+  const isAnyLoading = isEmailLoading || isGoogleLoading;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -217,14 +232,18 @@ const LoginScreen = () => {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.loginButton]}
+              style={[
+                styles.button,
+                styles.primaryButton,
+                isAnyLoading && !isEmailLoading && styles.buttonDisabled,
+              ]}
               onPress={handleEmailLogin}
-              disabled={isLoading}
+              disabled={isAnyLoading}
               accessibilityLabel="Sign in button">
-              {isLoading ? (
+              {isEmailLoading ? (
                 <ActivityIndicator color={colors.white} size="small" />
               ) : (
-                <Text style={styles.loginButtonText}>Sign In</Text>
+                <Text style={styles.buttonText}>Sign In</Text>
               )}
             </TouchableOpacity>
 
@@ -234,27 +253,50 @@ const LoginScreen = () => {
               <View style={styles.dividerLine} />
             </View>
 
-            <TouchableOpacity
-              style={styles.socialButton}
-              onPress={handleGoogleLogin}
-              disabled={isLoading}
-              accessibilityLabel="Continue with Google">
-              {isLoading ? (
-                <ActivityIndicator color={colors.black} size="small" />
-              ) : (
-                <>
-                  <Image
-                    style={styles.googleIcon}
-                    resizeMode="contain"
-                    source={icons.google}
-                    tintColor={colors.white}
-                  />
-                  <Text style={styles.socialButtonText}>
-                    Continue with Google
-                  </Text>
-                </>
-              )}
-            </TouchableOpacity>
+            <View style={styles.socialButtonsContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.button,
+                  styles.socialButton,
+                  isAnyLoading && !isGoogleLoading && styles.buttonDisabled,
+                ]}
+                onPress={handleGoogleLogin}
+                disabled={isAnyLoading}
+                accessibilityLabel="Continue with Google">
+                {isGoogleLoading ? (
+                  <ActivityIndicator color={colors.white} size="small" />
+                ) : (
+                  <>
+                    <Image
+                      style={styles.socialIcon}
+                      resizeMode="contain"
+                      source={icons.google}
+                      tintColor={colors.white}
+                    />
+                    <Text style={styles.buttonText}>Continue with Google</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.button,
+                  styles.socialButton,
+                  styles.facebookButton,
+                  isAnyLoading && styles.buttonDisabled,
+                ]}
+                onPress={handleFacebookLogin}
+                disabled={isAnyLoading}
+                accessibilityLabel="Continue with Facebook">
+                <Image
+                  style={styles.socialIcon}
+                  resizeMode="contain"
+                  source={icons.facebook}
+                  tintColor={colors.white}
+                />
+                <Text style={styles.buttonText}>Continue with Facebook</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           <View style={styles.footer}>
@@ -287,8 +329,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: wp(6.4),
   },
   header: {
-    marginTop: hp(8.92),
-    marginBottom: hp(4.92),
+    marginTop: hp(6),
+    marginBottom: hp(3),
     alignItems: 'center',
   },
   title: {
@@ -339,14 +381,14 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    padding: wp(5.33),
+    padding: wp(4.26),
     paddingLeft: 0,
     fontSize: fontSize(14),
     color: colors.black,
     fontFamily: fonts.regular,
   },
   eyeIcon: {
-    padding: wp(5.33),
+    padding: wp(4.26),
   },
   forgotPassword: {
     alignSelf: 'flex-end',
@@ -357,11 +399,11 @@ const styles = StyleSheet.create({
     color: colors.gold,
     fontFamily: fonts.bold,
   },
-  loginButton: {
-    backgroundColor: colors.black,
+  button: {
     borderRadius: wp(3),
     padding: wp(4.26),
     alignItems: 'center',
+    justifyContent: 'center',
     shadowColor: colors.black,
     shadowOffset: {
       width: 0,
@@ -370,11 +412,15 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 5,
     elevation: 8,
+    flexDirection: 'row',
+  },
+  primaryButton: {
+    backgroundColor: colors.black,
   },
   buttonDisabled: {
     opacity: 0.6,
   },
-  loginButtonText: {
+  buttonText: {
     color: colors.white,
     fontSize: fontSize(16),
     fontFamily: fonts.bold,
@@ -395,31 +441,25 @@ const styles = StyleSheet.create({
     fontSize: fontSize(14),
     fontFamily: fonts.regular,
   },
-  socialButton: {
-    flexDirection: 'row',
-    backgroundColor: colors.gold,
-    borderRadius: wp(3),
-    paddingVertical: wp(4.26),
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: colors.black,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: wp(3),
-    elevation: 5,
+  socialButtonsContainer: {
+    gap: hp(2),
   },
-  socialButtonText: {
-    marginLeft: 12,
-    color: colors.white,
-    fontSize: fontSize(16),
-    fontFamily: fonts.bold,
+  socialButton: {
+    backgroundColor: colors.gold,
+  },
+  facebookButton: {
+    backgroundColor: '#1877F2',
+  },
+  socialIcon: {
+    height: wp(5.33),
+    width: wp(5.33),
+    marginRight: wp(3),
   },
   footer: {
     paddingBottom: hp(4.92),
     alignItems: 'center',
+    marginTop: hp(2),
+    justifyContent: 'center',
   },
   footerText: {
     fontSize: fontSize(14),
