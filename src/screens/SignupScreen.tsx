@@ -31,6 +31,12 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import {GoogleSignin} from '@react-native-google-signin/google-signin';
+import {AccessToken, LoginManager} from 'react-native-fbsdk-next';
+import {
+  FacebookAuthProvider,
+  getAuth,
+  signInWithCredential,
+} from '@react-native-firebase/auth';
 
 const SignupScreen = () => {
   const [email, setEmail] = useState('');
@@ -41,11 +47,12 @@ const SignupScreen = () => {
   const [warning, setWarning] = useState('');
   const [isEmailLoading, setIsEmailLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isFacebookLoading, setIsFacebookLoading] = useState(false);
 
   const navigation = useNavigation();
   const dispatch = useDispatch<AppDispatch>();
 
-  const {isLoading, error} = useSelector((state: RootState) => state.auth);
+  const {error} = useSelector((state: RootState) => state.auth);
 
   useEffect(() => {
     GoogleSignin.configure({
@@ -151,16 +158,42 @@ const SignupScreen = () => {
     }
   };
 
-  const handleFacebookSignup = () => {
-    // Facebook signup implementation to be added later
-    console.log('Facebook signup');
+  const handleFacebookSignup = async () => {
+    try {
+      setIsFacebookLoading(true);
+      dispatch(resetOnboarding());
+
+      const result = await LoginManager.logInWithPermissions([
+        'public_profile',
+      ]);
+
+      if (result.isCancelled) {
+        throw 'User cancelled the login process';
+      }
+
+      const data = await AccessToken.getCurrentAccessToken();
+
+      if (!data) {
+        throw 'Something went wrong obtaining access token';
+      }
+
+      const facebookCredential = FacebookAuthProvider.credential(
+        data.accessToken,
+      );
+
+      await signInWithCredential(getAuth(), facebookCredential);
+    } catch (err) {
+      console.error('Facebook signup error:', err);
+    } finally {
+      setIsFacebookLoading(false);
+    }
   };
 
   const navigateToLogin = () => {
     navigation.navigate('Login' as never);
   };
 
-  const isAnyLoading = isEmailLoading || isGoogleLoading;
+  const isAnyLoading = isEmailLoading || isGoogleLoading || isFacebookLoading;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -328,19 +361,36 @@ const SignupScreen = () => {
                     styles.button,
                     styles.socialButton,
                     styles.facebookButton,
-                    isAnyLoading && styles.buttonDisabled,
+                    isAnyLoading && !isFacebookLoading && styles.buttonDisabled,
                   ]}
                   onPress={handleFacebookSignup}
                   disabled={isAnyLoading}>
-                  <Image
-                    style={styles.socialIcon}
-                    resizeMode="contain"
-                    source={icons.facebook}
-                    tintColor={colors.white}
-                  />
-                  <Text style={styles.buttonText}>Continue with Facebook</Text>
+                  {isFacebookLoading ? (
+                    <ActivityIndicator color={colors.white} size="small" />
+                  ) : (
+                    <>
+                      <Image
+                        style={styles.socialIcon}
+                        resizeMode="contain"
+                        source={icons.facebook}
+                        tintColor={colors.white}
+                      />
+                      <Text style={styles.buttonText}>
+                        Continue with Facebook
+                      </Text>
+                    </>
+                  )}
                 </TouchableOpacity>
               </View>
+            </View>
+
+            <View style={styles.footer}>
+              <Text style={styles.footerText}>
+                Already have an account?{' '}
+                <Text style={styles.linkText} onPress={navigateToLogin}>
+                  Sign In
+                </Text>
+              </Text>
             </View>
           </Animated.View>
         </ScrollView>
@@ -475,7 +525,7 @@ const styles = StyleSheet.create({
     marginTop: 0,
   },
   facebookButton: {
-    backgroundColor: '#1877F2', // Facebook blue
+    backgroundColor: '#1877F2',
   },
   socialIcon: {
     height: wp(5.33),
@@ -486,6 +536,7 @@ const styles = StyleSheet.create({
     paddingVertical: hp(4),
     alignItems: 'center',
     marginTop: hp(2),
+    justifyContent: 'center',
   },
   footerText: {
     fontSize: fontSize(14),

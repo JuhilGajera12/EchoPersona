@@ -9,6 +9,7 @@ import {
   Image,
   Platform,
   StatusBar,
+  Alert,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {RootState, AppDispatch} from '../store';
@@ -29,37 +30,78 @@ const STATUS_BAR_HEIGHT =
 const SettingsScreen = () => {
   const dispatch = useDispatch<AppDispatch>();
   const [isDarkMode, setIsDarkMode] = useState(false);
-
-  const [logoutModalVisible, setLogoutModalVisible] = useState(false);
-  const [deleteAccountModalVisible, setDeleteAccountModalVisible] =
-    useState(false);
+  const [modalConfig, setModalConfig] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+    confirmText: string;
+    onConfirm: () => Promise<void>;
+    isDanger?: boolean;
+  }>({
+    visible: false,
+    title: '',
+    message: '',
+    confirmText: '',
+    onConfirm: async () => {},
+  });
 
   const isPremium = useSelector((state: RootState) => state.premium.isPremium);
   const auth = useSelector((state: RootState) => state.auth);
   const isLoading = auth.isLoading;
+  const isFacebookUser = auth.user?.providerId === 'facebook.com';
 
   const handleLogout = () => {
-    setLogoutModalVisible(true);
-  };
-
-  const confirmLogout = () => {
-    dispatch(logout());
-    dispatch(clearProfile());
-    dispatch(clearEntries());
-    dispatch(clearSubscription());
-    dispatch(clearPromptHistory());
+    setModalConfig({
+      visible: true,
+      title: 'Logout',
+      message: 'Are you sure you want to logout from your account?',
+      confirmText: 'Logout',
+      onConfirm: async () => {
+        try {
+          await dispatch(logout()).unwrap();
+          dispatch(clearProfile());
+          dispatch(clearEntries());
+          dispatch(clearSubscription());
+          dispatch(clearPromptHistory());
+        } catch (error: any) {
+          throw new Error(error.message || 'Failed to logout. Please try again.');
+        }
+      },
+    });
   };
 
   const handleDeleteAccount = () => {
-    setDeleteAccountModalVisible(true);
-  };
+    if (isFacebookUser) {
+      setModalConfig({
+        visible: true,
+        title: 'Not Available',
+        message: 'Account deletion is not available for Facebook accounts. Please contact support if you need assistance.',
+        confirmText: 'OK',
+        onConfirm: async () => {
+          setModalConfig(prev => ({...prev, visible: false}));
+        },
+      });
+      return;
+    }
 
-  const confirmDeleteAccount = () => {
-    dispatch(deleteAccount());
-    dispatch(clearProfile());
-    dispatch(clearEntries());
-    dispatch(clearSubscription());
-    dispatch(clearPromptHistory());
+    setModalConfig({
+      visible: true,
+      title: 'Delete Account',
+      message: 'Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently lost.',
+      confirmText: 'Delete',
+      isDanger: true,
+      onConfirm: async () => {
+        try {
+          await dispatch(deleteAccount()).unwrap();
+          dispatch(clearProfile());
+          dispatch(clearEntries());
+          dispatch(clearSubscription());
+          dispatch(clearPromptHistory());
+        } catch (error: any) {
+          throw new Error(error.message || 'Failed to delete account. Please try again.');
+        }
+      },
+    });
   };
 
   const handleExportData = () => {};
@@ -70,11 +112,12 @@ const SettingsScreen = () => {
     rightElement?: React.ReactNode,
     onPress?: () => void,
     isDanger?: boolean,
+    disabled?: boolean,
   ) => (
     <TouchableOpacity
       style={[styles.settingItem, onPress && styles.settingItemPressable]}
       onPress={onPress}
-      disabled={!onPress || isLoading}>
+      disabled={!onPress || isLoading || disabled}>
       <View style={styles.settingInfo}>
         <View
           style={[
@@ -142,6 +185,12 @@ const SettingsScreen = () => {
             null,
             handleDeleteAccount,
             true,
+            isFacebookUser,
+          )}
+          {isFacebookUser && (
+            <Text style={styles.disabledText}>
+              Account deletion is not available for Facebook accounts
+            </Text>
           )}
         </View>
 
@@ -179,29 +228,16 @@ const SettingsScreen = () => {
         <Text style={styles.version}>Version 1.0.0</Text>
       </ScrollView>
 
-      {/* Logout Confirmation Modal */}
       <ConfirmationModal
-        visible={logoutModalVisible}
-        title="Logout"
-        message="Are you sure you want to logout from your account?"
-        confirmText="Logout"
-        cancelText="Cancel"
-        onConfirm={confirmLogout}
-        onCancel={() => setLogoutModalVisible(false)}
+        visible={modalConfig.visible}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        confirmText={modalConfig.confirmText}
+        cancelText={modalConfig.isDanger ? 'Cancel' : 'Close'}
+        onConfirm={modalConfig.onConfirm}
+        onCancel={() => setModalConfig(prev => ({...prev, visible: false}))}
         isLoading={isLoading}
-      />
-
-      {/* Delete Account Confirmation Modal */}
-      <ConfirmationModal
-        visible={deleteAccountModalVisible}
-        title="Delete Account"
-        message="Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently lost."
-        confirmText="Delete"
-        cancelText="Cancel"
-        onConfirm={confirmDeleteAccount}
-        onCancel={() => setDeleteAccountModalVisible(false)}
-        isLoading={isLoading}
-        isDanger={true}
+        isDanger={modalConfig.isDanger}
       />
     </View>
   );
@@ -339,6 +375,13 @@ const styles = StyleSheet.create({
     fontFamily: fonts.regular,
     color: colors.sand,
     marginBottom: hp(8),
+  },
+  disabledText: {
+    fontSize: fontSize(14),
+    fontFamily: fonts.regular,
+    color: colors.error,
+    marginTop: hp(1),
+    marginLeft: wp(14), // Align with the setting item text
   },
 });
 

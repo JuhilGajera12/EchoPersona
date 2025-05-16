@@ -1,7 +1,9 @@
 import {createSlice, createAsyncThunk} from '@reduxjs/toolkit';
 import auth from '@react-native-firebase/auth';
 import {GoogleSignin} from '@react-native-google-signin/google-signin';
+import {LoginManager} from 'react-native-fbsdk-next';
 import {commonAction} from '../../helpers/globalFunction';
+import {RootState} from '../../store';
 
 export interface AuthState {
   user: {
@@ -151,8 +153,21 @@ export const loginWithGoogle = createAsyncThunk(
 
 export const logout = createAsyncThunk(
   'auth/logout',
-  async (_, {rejectWithValue}) => {
+  async (_, {rejectWithValue, getState}) => {
     try {
+      const state = getState() as RootState;
+      const providerId = state.auth.user?.providerId;
+
+      // Handle Facebook logout
+      if (providerId === 'facebook.com') {
+        await LoginManager.logOut();
+      }
+      // Handle Google logout
+      else if (providerId === 'google.com') {
+        await GoogleSignin.signOut();
+      }
+
+      // Firebase logout
       await auth().signOut();
       return null;
     } catch (error: any) {
@@ -163,8 +178,16 @@ export const logout = createAsyncThunk(
 
 export const deleteAccount = createAsyncThunk(
   'auth/deleteAccount',
-  async (_, {rejectWithValue}) => {
+  async (_, {rejectWithValue, getState}) => {
     try {
+      const state = getState() as RootState;
+      const providerId = state.auth.user?.providerId;
+
+      // Don't allow account deletion for Facebook users
+      if (providerId === 'facebook.com') {
+        return rejectWithValue('Account deletion is not available for Facebook accounts');
+      }
+
       const currentUser = auth().currentUser;
       if (currentUser) {
         await currentUser.delete();

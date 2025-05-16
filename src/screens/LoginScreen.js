@@ -28,6 +28,12 @@ import {
   loginWithGoogle,
   clearError,
 } from '../store/slices/authSlice';
+import {AccessToken, LoginManager, Settings} from 'react-native-fbsdk-next';
+import {
+  FacebookAuthProvider,
+  getAuth,
+  signInWithCredential,
+} from '@react-native-firebase/auth';
 
 const LoginScreen = () => {
   const [email, setEmail] = useState('');
@@ -36,6 +42,7 @@ const LoginScreen = () => {
   const [warning, setWarning] = useState('');
   const [isEmailLoading, setIsEmailLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isFacebookLoading, setIsFacebookLoading] = useState(false);
 
   const navigation = useNavigation();
   const dispatch = useDispatch();
@@ -131,16 +138,39 @@ const LoginScreen = () => {
     }
   };
 
-  const handleFacebookLogin = () => {
-    // Facebook login implementation to be added later
-    console.log('Facebook login');
+  const handleFacebookLogin = async () => {
+    try {
+      setIsFacebookLoading(true);
+      const result = await LoginManager.logInWithPermissions([
+        'public_profile',
+      ]);
+      if (result.isCancelled) {
+        throw 'User cancelled the login process';
+      }
+
+      const data = await AccessToken.getCurrentAccessToken();
+
+      if (!data) {
+        throw 'Something went wrong obtaining access token';
+      }
+
+      const facebookCredential = FacebookAuthProvider.credential(
+        data.accessToken,
+      );
+
+      await signInWithCredential(getAuth(), facebookCredential);
+    } catch (err) {
+      console.error('Facebook login error:', err);
+    } finally {
+      setIsFacebookLoading(false);
+    }
   };
 
   const navigateToSignup = () => {
     navigation.navigate('Signup');
   };
 
-  const isAnyLoading = isEmailLoading || isGoogleLoading;
+  const isAnyLoading = isEmailLoading || isGoogleLoading || isFacebookLoading;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -283,18 +313,26 @@ const LoginScreen = () => {
                   styles.button,
                   styles.socialButton,
                   styles.facebookButton,
-                  isAnyLoading && styles.buttonDisabled,
+                  isAnyLoading && !isFacebookLoading && styles.buttonDisabled,
                 ]}
                 onPress={handleFacebookLogin}
                 disabled={isAnyLoading}
                 accessibilityLabel="Continue with Facebook">
-                <Image
-                  style={styles.socialIcon}
-                  resizeMode="contain"
-                  source={icons.facebook}
-                  tintColor={colors.white}
-                />
-                <Text style={styles.buttonText}>Continue with Facebook</Text>
+                {isFacebookLoading ? (
+                  <ActivityIndicator color={colors.white} size="small" />
+                ) : (
+                  <>
+                    <Image
+                      style={styles.socialIcon}
+                      resizeMode="contain"
+                      source={icons.facebook}
+                      tintColor={colors.white}
+                    />
+                    <Text style={styles.buttonText}>
+                      Continue with Facebook
+                    </Text>
+                  </>
+                )}
               </TouchableOpacity>
             </View>
           </View>
