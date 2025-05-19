@@ -8,7 +8,7 @@ import Animated, {
   interpolate,
   Extrapolate,
 } from 'react-native-reanimated';
-import {useColors} from '../../constant/colors';
+import {useColors, Colors} from '../../constant/colors';
 import {fonts} from '../../constant/fonts';
 import {fontSize, hp, wp} from '../../helpers/globalFunction';
 
@@ -86,73 +86,65 @@ export const StreakBadge: React.FC<StreakBadgeProps> = ({
   );
 };
 
-const createStyles = colors =>
+const createStyles = (colors: Colors) =>
   StyleSheet.create({
     container: {
-      backgroundColor: colors.white,
-      borderRadius: wp(4),
-      padding: wp(4),
-      marginHorizontal: wp(5),
-      marginVertical: hp(1),
-      shadowColor: colors.black,
-      shadowOffset: {
-        width: 0,
-        height: 2,
-      },
-      shadowOpacity: 0.1,
-      shadowRadius: 3.84,
-      elevation: 5,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
+      paddingVertical: hp(1),
+      paddingHorizontal: wp(2),
+      backgroundColor: 'transparent',
     },
     streakContainer: {
-      flex: 1,
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
     },
     currentStreakContainer: {
-      flex: 1,
       alignItems: 'center',
+      paddingHorizontal: wp(4.26),
     },
     bestStreakContainer: {
-      flex: 1,
       alignItems: 'center',
+      paddingHorizontal: wp(4.26),
     },
     streakLabel: {
       fontFamily: fonts.bold,
-      fontSize: fontSize(12),
-      color: colors.sand,
-      marginBottom: hp(0.5),
+      fontSize: fontSize(10),
+      color: colors.black,
+      opacity: 0.7,
+      marginBottom: hp(0.2),
     },
     streakValue: {
       fontFamily: fonts.bold,
-      fontSize: fontSize(24),
+      fontSize: fontSize(18),
       color: colors.black,
-      marginBottom: hp(0.2),
+      marginBottom: hp(0.1),
     },
     streakUnit: {
       fontFamily: fonts.regular,
-      fontSize: fontSize(12),
-      color: colors.sand,
+      fontSize: fontSize(10),
+      color: colors.black,
+      opacity: 0.7,
     },
     divider: {
       width: 1,
-      height: hp(4),
+      height: hp(3),
       backgroundColor: colors.black,
+      opacity: 0.2,
       marginHorizontal: wp(2),
     },
     flameContainer: {
-      width: wp(12),
-      height: wp(12),
-      borderRadius: wp(6),
-      backgroundColor: colors.gold + '20',
+      width: wp(8),
+      height: wp(8),
+      borderRadius: wp(4),
+      backgroundColor: colors.black + '20',
       justifyContent: 'center',
       alignItems: 'center',
       marginLeft: wp(2),
     },
     flameEmoji: {
-      fontSize: fontSize(20),
+      fontSize: fontSize(16),
     },
   });

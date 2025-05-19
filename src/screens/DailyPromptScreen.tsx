@@ -14,7 +14,7 @@ import {
 import {useDispatch, useSelector} from 'react-redux';
 import {fontSize, hp, wp} from '../helpers/globalFunction';
 import {fonts} from '../constant/fonts';
-import {useColors} from '../constant/colors';
+import {useColors, Colors} from '../constant/colors';
 import {icons} from '../constant/icons';
 import {RootState} from '../store';
 import {setCurrentPrompt} from '../store/slices/promptSlice';
@@ -185,20 +185,21 @@ const DailyPromptScreen = () => {
         </Text>
       </View>
 
-      <StreakBadge
-        currentStreak={currentStreak}
-        bestStreak={bestStreak}
-        animatedValue={streakAnim}
-      />
-
       <Animated.View style={[styles.promptCard, promptCardStyle]}>
         <View style={styles.promptContent}>
-          <View style={styles.promptIconContainer}>
-            <Image
-              source={icons.journal}
-              style={styles.promptIcon}
-              tintColor={colors.white}
-              resizeMode="contain"
+          <View style={styles.promptHeader}>
+            <View style={styles.promptIconContainer}>
+              <Image
+                source={icons.journal}
+                style={styles.promptIcon}
+                tintColor={colors.white}
+                resizeMode="contain"
+              />
+            </View>
+            <StreakBadge
+              currentStreak={currentStreak}
+              bestStreak={bestStreak}
+              animatedValue={streakAnim}
             />
           </View>
           <Text style={styles.promptText}>{currentPrompt}</Text>
@@ -261,7 +262,7 @@ const DailyPromptScreen = () => {
     </KeyboardAvoidingView>
   );
 };
-const createStyles = colors =>
+const createStyles = (colors: Colors) =>
   StyleSheet.create({
     container: {
       flex: 1,
@@ -304,6 +305,12 @@ const createStyles = colors =>
     promptContent: {
       padding: wp(6),
     },
+    promptHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: hp(2),
+    },
     promptIconContainer: {
       width: wp(12),
       height: wp(12),
@@ -311,7 +318,6 @@ const createStyles = colors =>
       backgroundColor: colors.black,
       justifyContent: 'center',
       alignItems: 'center',
-      marginBottom: hp(2),
     },
     promptIcon: {
       width: wp(6),
