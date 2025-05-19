@@ -19,7 +19,7 @@ import JournalScreen from '../screens/JournalScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import EvolutionScreen from '../screens/EvolutionScreen';
 import PremiumScreen from '../screens/PremiumScreen';
-import {colors} from '../constant/colors';
+import {useColors} from '../constant/colors';
 import {icons} from '../constant/icons';
 import {hp, wp} from '../helpers/globalFunction';
 
@@ -31,6 +31,8 @@ const TAB_BAR_PADDING = hp(1);
 const AnimatedTabBarIcon = memo(({focused, icon}) => {
   const scale = useSharedValue(1);
   const translateY = useSharedValue(0);
+  const colors = useColors();
+  const styles = createStyles(colors);
 
   React.useEffect(() => {
     scale.value = withSpring(focused ? 1.1 : 1, {damping: 10});
@@ -55,17 +57,23 @@ const AnimatedTabBarIcon = memo(({focused, icon}) => {
   );
 });
 
-const TabButton = memo(({onPress, onLongPress, icon}) => (
-  <Pressable
-    onPress={onPress}
-    onLongPress={onLongPress}
-    style={({pressed}) => [styles.tabButton, {opacity: pressed ? 0.7 : 1}]}
-    android_ripple={{color: colors.lightGray, borderless: true}}>
-    {icon}
-  </Pressable>
-));
+const TabButton = memo(({onPress, onLongPress, icon}) => {
+  const colors = useColors();
+  const styles = createStyles(colors);
+  return (
+    <Pressable
+      onPress={onPress}
+      onLongPress={onLongPress}
+      style={({pressed}) => [styles.tabButton, {opacity: pressed ? 0.7 : 1}]}
+      android_ripple={{color: colors.lightGray, borderless: true}}>
+      {icon}
+    </Pressable>
+  );
+});
 
 const MyTabBar = React.memo(({state, descriptors, navigation}) => {
+  const colors = useColors();
+  const styles = createStyles(colors);
   const renderTab = (route, index) => {
     const {options} = descriptors[route.key];
     const isFocused = state.index === index;
@@ -106,11 +114,15 @@ const MyTabBar = React.memo(({state, descriptors, navigation}) => {
   );
 });
 
-const ScreenWrapper = memo(({children}) => (
-  <SafeAreaView style={styles.screenWrapper}>
-    <View style={styles.screenContent}>{children}</View>
-  </SafeAreaView>
-));
+const ScreenWrapper = memo(({children}) => {
+  const colors = useColors();
+  const styles = createStyles(colors);
+  return (
+    <SafeAreaView style={styles.screenWrapper}>
+      <View style={styles.screenContent}>{children}</View>
+    </SafeAreaView>
+  );
+});
 
 const TabNavigator = () => {
   const renderScreen = useCallback(
@@ -143,53 +155,54 @@ const TabNavigator = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  screenWrapper: {
-    flex: 1,
-    backgroundColor: colors.white,
-  },
-  screenContent: {
-    flex: 1,
-    paddingBottom: TAB_BAR_HEIGHT + TAB_BAR_MARGIN + TAB_BAR_PADDING,
-    backgroundColor: colors.white,
-  },
-  tabBarContainer: {
-    position: 'absolute',
-    bottom: TAB_BAR_MARGIN,
-    left: 0,
-    right: 0,
-    height: TAB_BAR_HEIGHT + TAB_BAR_MARGIN,
-    paddingBottom: Platform.OS === 'ios' ? TAB_BAR_MARGIN : 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  tabBar: {
-    flexDirection: 'row',
-    height: TAB_BAR_HEIGHT,
-    backgroundColor: colors.white,
-    borderRadius: wp(4),
-    shadowColor: colors.black,
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
-    marginHorizontal: wp(5),
-  },
-  tabButton: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  tabIconContainer: {
-    width: wp(12),
-    height: wp(12),
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  tabIcon: {
-    width: wp(6),
-    height: wp(6),
-  },
-});
+const createStyles = colors =>
+  StyleSheet.create({
+    screenWrapper: {
+      flex: 1,
+      backgroundColor: colors.white,
+    },
+    screenContent: {
+      flex: 1,
+      paddingBottom: TAB_BAR_HEIGHT + TAB_BAR_MARGIN + TAB_BAR_PADDING,
+      backgroundColor: colors.white,
+    },
+    tabBarContainer: {
+      position: 'absolute',
+      bottom: TAB_BAR_MARGIN,
+      left: 0,
+      right: 0,
+      height: TAB_BAR_HEIGHT + TAB_BAR_MARGIN,
+      paddingBottom: Platform.OS === 'ios' ? TAB_BAR_MARGIN : 0,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    tabBar: {
+      flexDirection: 'row',
+      height: TAB_BAR_HEIGHT,
+      backgroundColor: colors.white,
+      borderRadius: wp(4),
+      shadowColor: colors.black,
+      shadowOffset: {width: 0, height: 4},
+      shadowOpacity: 0.1,
+      shadowRadius: 8,
+      elevation: 5,
+      marginHorizontal: wp(5),
+    },
+    tabButton: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    tabIconContainer: {
+      width: wp(12),
+      height: wp(12),
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    tabIcon: {
+      width: wp(6),
+      height: wp(6),
+    },
+  });
 
 export default TabNavigator;

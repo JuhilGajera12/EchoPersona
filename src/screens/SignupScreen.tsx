@@ -20,7 +20,7 @@ import {
   clearError,
 } from '../store/slices/authSlice';
 import {resetOnboarding} from '../store/slices/onboardingSlice';
-import {colors} from '../constant/colors';
+import {useColors} from '../constant/colors';
 import {fonts} from '../constant/fonts';
 import {icons} from '../constant/icons';
 import {fontSize, hp, wp} from '../helpers/globalFunction';
@@ -51,6 +51,8 @@ const SignupScreen = () => {
 
   const navigation = useNavigation();
   const dispatch = useDispatch<AppDispatch>();
+  const colors = useColors();
+  const styles = createStyles(colors);
 
   const {error} = useSelector((state: RootState) => state.auth);
 
@@ -398,174 +400,174 @@ const SignupScreen = () => {
     </SafeAreaView>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.white,
-  },
-  keyboardView: {
-    flex: 1,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: wp(6.4),
-    paddingBottom: hp(2),
-  },
-  header: {
-    marginTop: hp(6),
-    marginBottom: hp(3),
-    alignItems: 'center',
-  },
-  title: {
-    fontSize: fontSize(32),
-    fontFamily: fonts.black,
-    color: colors.black,
-    marginBottom: hp(0.98),
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: fontSize(14),
-    color: colors.black,
-    textAlign: 'center',
-    fontFamily: fonts.regular,
-  },
-  form: {
-    flex: 1,
-  },
-  inputContainer: {
-    marginBottom: hp(2.5),
-  },
-  inputLabel: {
-    fontSize: fontSize(14),
-    color: colors.black,
-    marginBottom: hp(0.98),
-    fontFamily: fonts.bold,
-  },
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.white,
-    borderRadius: wp(3),
-    borderWidth: 1,
-    borderColor: colors.gold,
-    shadowColor: colors.black,
-    shadowOffset: {
-      width: 0,
-      height: 2,
+const createStyles = colors =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.white,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  inputIcon: {
-    height: wp(4.26),
-    width: wp(4.26),
-    marginHorizontal: wp(2.66),
-  },
-  input: {
-    flex: 1,
-    padding: wp(4.26),
-    paddingLeft: 0,
-    fontSize: fontSize(14),
-    color: colors.black,
-    fontFamily: fonts.regular,
-  },
-  eyeIcon: {
-    padding: wp(4.26),
-  },
-  button: {
-    borderRadius: wp(3),
-    padding: wp(4.26),
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: colors.black,
-    shadowOffset: {
-      width: 0,
-      height: 4,
+    keyboardView: {
+      flex: 1,
     },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 8,
-    flexDirection: 'row',
-    marginTop: hp(2),
-  },
-  primaryButton: {
-    backgroundColor: colors.black,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    color: colors.white,
-    fontSize: fontSize(16),
-    fontFamily: fonts.bold,
-  },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: hp(3),
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: colors.lightGray,
-  },
-  dividerText: {
-    marginHorizontal: wp(4.26),
-    color: colors.black,
-    fontSize: fontSize(14),
-    fontFamily: fonts.regular,
-  },
-  socialButtonsContainer: {
-    gap: hp(2),
-  },
-  socialButton: {
-    backgroundColor: colors.gold,
-    marginTop: 0,
-  },
-  facebookButton: {
-    backgroundColor: '#1877F2',
-  },
-  socialIcon: {
-    height: wp(5.33),
-    width: wp(5.33),
-    marginRight: wp(3),
-  },
-  footer: {
-    paddingVertical: hp(4),
-    alignItems: 'center',
-    marginTop: hp(2),
-    justifyContent: 'center',
-  },
-  footerText: {
-    fontSize: fontSize(14),
-    color: colors.black,
-    textAlign: 'center',
-    fontFamily: fonts.bold,
-  },
-  linkText: {
-    color: colors.gold,
-    fontFamily: fonts.bold,
-    fontSize: fontSize(14),
-  },
-  errorText: {
-    color: colors.error,
-  },
-  errorIcon: {
-    height: wp(4.26),
-    width: wp(4.26),
-    marginRight: wp(2.66),
-  },
-  errorView: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: wp(2.66),
-  },
-  googleIcon: {
-    height: wp(5.33),
-    width: wp(5.33),
-  },
-});
+    content: {
+      flex: 1,
+      paddingHorizontal: wp(6.4),
+      paddingBottom: hp(2),
+    },
+    header: {
+      marginTop: hp(6),
+      marginBottom: hp(3),
+      alignItems: 'center',
+    },
+    title: {
+      fontSize: fontSize(32),
+      fontFamily: fonts.black,
+      color: colors.black,
+      marginBottom: hp(0.98),
+      textAlign: 'center',
+    },
+    subtitle: {
+      fontSize: fontSize(14),
+      color: colors.black,
+      textAlign: 'center',
+      fontFamily: fonts.regular,
+    },
+    form: {
+      flex: 1,
+    },
+    inputContainer: {
+      marginBottom: hp(2.5),
+    },
+    inputLabel: {
+      fontSize: fontSize(14),
+      color: colors.black,
+      marginBottom: hp(0.98),
+      fontFamily: fonts.bold,
+    },
+    inputWrapper: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.white,
+      borderRadius: wp(3),
+      borderWidth: 1,
+      borderColor: colors.gold,
+      shadowColor: colors.black,
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.1,
+      shadowRadius: 3.84,
+      elevation: 5,
+    },
+    inputIcon: {
+      height: wp(4.26),
+      width: wp(4.26),
+      marginHorizontal: wp(2.66),
+    },
+    input: {
+      flex: 1,
+      padding: wp(4.26),
+      paddingLeft: 0,
+      fontSize: fontSize(14),
+      color: colors.black,
+      fontFamily: fonts.regular,
+    },
+    eyeIcon: {
+      padding: wp(4.26),
+    },
+    button: {
+      borderRadius: wp(3),
+      padding: wp(4.26),
+      alignItems: 'center',
+      justifyContent: 'center',
+      shadowColor: colors.black,
+      shadowOffset: {
+        width: 0,
+        height: 4,
+      },
+      shadowOpacity: 0.3,
+      shadowRadius: 5,
+      elevation: 8,
+      flexDirection: 'row',
+      marginTop: hp(2),
+    },
+    primaryButton: {
+      backgroundColor: colors.black,
+    },
+    buttonDisabled: {
+      opacity: 0.6,
+    },
+    buttonText: {
+      color: colors.white,
+      fontSize: fontSize(16),
+      fontFamily: fonts.bold,
+    },
+    divider: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginVertical: hp(3),
+    },
+    dividerLine: {
+      flex: 1,
+      height: 1,
+      backgroundColor: colors.lightGray,
+    },
+    dividerText: {
+      marginHorizontal: wp(4.26),
+      color: colors.black,
+      fontSize: fontSize(14),
+      fontFamily: fonts.regular,
+    },
+    socialButtonsContainer: {
+      gap: hp(2),
+    },
+    socialButton: {
+      backgroundColor: colors.gold,
+      marginTop: 0,
+    },
+    facebookButton: {
+      backgroundColor: '#1877F2',
+    },
+    socialIcon: {
+      height: wp(5.33),
+      width: wp(5.33),
+      marginRight: wp(3),
+    },
+    footer: {
+      paddingVertical: hp(4),
+      alignItems: 'center',
+      marginTop: hp(2),
+      justifyContent: 'center',
+    },
+    footerText: {
+      fontSize: fontSize(14),
+      color: colors.black,
+      textAlign: 'center',
+      fontFamily: fonts.bold,
+    },
+    linkText: {
+      color: colors.gold,
+      fontFamily: fonts.bold,
+      fontSize: fontSize(14),
+    },
+    errorText: {
+      color: colors.error,
+    },
+    errorIcon: {
+      height: wp(4.26),
+      width: wp(4.26),
+      marginRight: wp(2.66),
+    },
+    errorView: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: wp(2.66),
+    },
+    googleIcon: {
+      height: wp(5.33),
+      width: wp(5.33),
+    },
+  });
 
 export default SignupScreen;

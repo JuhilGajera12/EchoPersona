@@ -22,7 +22,7 @@ import LoginScreen from '../screens/LoginScreen';
 import SignupScreen from '../screens/SignupScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import OnboardingScreen from '../screens/OnboardingScreen';
-import {colors} from '../constant/colors';
+import {useColors} from '../constant/colors';
 import {icons} from '../constant/icons';
 import {hp, wp} from '../helpers/globalFunction';
 import auth from '@react-native-firebase/auth';
@@ -49,6 +49,8 @@ const AnimatedTabBarIcon: React.FC<AnimatedTabBarIconProps> = ({
 }) => {
   const scale = useSharedValue(1);
   const translateY = useSharedValue(0);
+  const colors = useColors();
+  const styles = createStyles(colors);
 
   useEffect(() => {
     scale.value = withSpring(focused ? 1.1 : 1, {damping: 10});
@@ -79,15 +81,19 @@ type TabButtonProps = {
   icon: React.ReactNode;
 };
 
-const TabButton: React.FC<TabButtonProps> = ({onPress, onLongPress, icon}) => (
-  <Pressable
-    onPress={onPress}
-    onLongPress={onLongPress}
-    style={({pressed}) => [styles.tabButton, {opacity: pressed ? 0.7 : 1}]}
-    android_ripple={{color: colors.lightGray, borderless: true}}>
-    {icon}
-  </Pressable>
-);
+const TabButton: React.FC<TabButtonProps> = ({onPress, onLongPress, icon}) => {
+  const colors = useColors();
+  const styles = createStyles(colors);
+  return (
+    <Pressable
+      onPress={onPress}
+      onLongPress={onLongPress}
+      style={({pressed}) => [styles.tabButton, {opacity: pressed ? 0.7 : 1}]}
+      android_ripple={{color: colors.lightGray, borderless: true}}>
+      {icon}
+    </Pressable>
+  );
+};
 
 type MyTabBarProps = {
   state: any;
@@ -100,6 +106,8 @@ const MyTabBar: React.FC<MyTabBarProps> = ({
   descriptors,
   navigation,
 }) => {
+  const colors = useColors();
+  const styles = createStyles(colors);
   return (
     <View style={styles.tabBarContainer}>
       <View style={styles.tabBar}>
@@ -140,11 +148,15 @@ const MyTabBar: React.FC<MyTabBarProps> = ({
   );
 };
 
-const ScreenWrapper: React.FC<{children: React.ReactNode}> = ({children}) => (
-  <SafeAreaView style={styles.screenWrapper}>
-    <View style={styles.screenContent}>{children}</View>
-  </SafeAreaView>
-);
+const ScreenWrapper: React.FC<{children: React.ReactNode}> = ({children}) => {
+  const colors = useColors();
+  const styles = createStyles(colors);
+  return (
+    <SafeAreaView style={styles.screenWrapper}>
+      <View style={styles.screenContent}>{children}</View>
+    </SafeAreaView>
+  );
+};
 
 const renderScreen = (
   name: string,
@@ -186,6 +198,8 @@ const AuthNavigator: React.FC = () => {
   const {hasCompletedOnboarding} = useSelector(
     (state: RootState) => state.onboarding,
   );
+  const colors = useColors();
+  const styles = createStyles(colors);
 
   useEffect(() => {
     const subscriber = auth().onAuthStateChanged(user => {
@@ -252,59 +266,60 @@ const AuthNavigator: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors.white,
-  },
-  screenWrapper: {
-    flex: 1,
-    backgroundColor: colors.white,
-  },
-  screenContent: {
-    flex: 1,
-    paddingBottom: hp(11),
-    backgroundColor: colors.white,
-  },
-  tabBarContainer: {
-    position: 'absolute',
-    bottom: hp(2),
-    left: 0,
-    right: 0,
-    height: hp(10),
-    paddingBottom: Platform.OS === 'ios' ? hp(2) : 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  tabBar: {
-    flexDirection: 'row',
-    height: hp(8),
-    backgroundColor: colors.white,
-    borderRadius: wp(4),
-    shadowColor: colors.black,
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
-    marginHorizontal: wp(5),
-  },
-  tabButton: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  tabIconContainer: {
-    width: wp(12),
-    height: wp(12),
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  tabIcon: {
-    width: wp(6),
-    height: wp(6),
-  },
-});
+const createStyles = colors =>
+  StyleSheet.create({
+    loadingContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: colors.white,
+    },
+    screenWrapper: {
+      flex: 1,
+      backgroundColor: colors.white,
+    },
+    screenContent: {
+      flex: 1,
+      paddingBottom: hp(11),
+      backgroundColor: colors.white,
+    },
+    tabBarContainer: {
+      position: 'absolute',
+      bottom: hp(2),
+      left: 0,
+      right: 0,
+      height: hp(10),
+      paddingBottom: Platform.OS === 'ios' ? hp(2) : 0,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    tabBar: {
+      flexDirection: 'row',
+      height: hp(8),
+      backgroundColor: colors.white,
+      borderRadius: wp(4),
+      shadowColor: colors.black,
+      shadowOffset: {width: 0, height: 4},
+      shadowOpacity: 0.1,
+      shadowRadius: 8,
+      elevation: 5,
+      marginHorizontal: wp(5),
+    },
+    tabButton: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    tabIconContainer: {
+      width: wp(12),
+      height: wp(12),
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    tabIcon: {
+      width: wp(6),
+      height: wp(6),
+    },
+  });
 
 export default AuthNavigator;

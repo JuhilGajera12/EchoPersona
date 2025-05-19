@@ -10,19 +10,18 @@ import {
   StatusBar,
   Animated,
   FlatList,
-  Dimensions,
   Modal,
 } from 'react-native';
 import {useSelector} from 'react-redux';
 import {RootState} from '../store';
-import {colors} from '../constant/colors';
+import {useColors} from '../constant/colors';
 import {fonts} from '../constant/fonts';
 import {icons} from '../constant/icons';
 import {fontSize, hp, wp} from '../helpers/globalFunction';
 
 const STATUS_BAR_HEIGHT =
   Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0;
-const {width} = Dimensions.get('window');
+
 const TIMELINE_ITEM_WIDTH = wp(80);
 const TIMELINE_SPACING = wp(4);
 
@@ -52,6 +51,8 @@ const EvolutionScreen = () => {
   const slideAnim = useRef(new Animated.Value(50)).current;
   const [currentIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
+  const colors = useColors();
+  const styles = createStyles(colors);
 
   useEffect(() => {
     if (profiles.length > 0) {
@@ -317,318 +318,319 @@ const EvolutionScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.white,
-  },
-  header: {
-    backgroundColor: colors.white,
-    paddingTop: Platform.OS === 'ios' ? hp(6) : STATUS_BAR_HEIGHT + hp(2),
-    paddingBottom: hp(3),
-    borderBottomWidth: 1,
-    borderBottomColor: colors.lightGray,
-  },
-  headerContent: {
-    paddingHorizontal: wp(6),
-  },
-  headerTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  headerTextContainer: {
-    flex: 1,
-  },
-  headerIcon: {
-    width: wp(12),
-    height: wp(12),
-    marginLeft: wp(4),
-  },
-  title: {
-    fontSize: fontSize(32),
-    fontFamily: fonts.bold,
-    color: colors.black,
-    marginBottom: hp(1),
-  },
-  subtitle: {
-    fontSize: fontSize(16),
-    fontFamily: fonts.regular,
-    color: colors.sand,
-  },
-  timelineSection: {
-    backgroundColor: colors.white,
-    paddingVertical: hp(2),
-    borderBottomWidth: 1,
-    borderBottomColor: colors.lightGray,
-  },
-  timelineContent: {
-    paddingHorizontal: wp(6),
-  },
-  timelineNode: {
-    width: TIMELINE_ITEM_WIDTH,
-    marginHorizontal: TIMELINE_SPACING / 2,
-    backgroundColor: colors.white,
-    borderRadius: wp(4),
-    padding: wp(4),
-    shadowColor: colors.black,
-    shadowOffset: {
-      width: 0,
-      height: 2,
+const createStyles = colors =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.white,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  timelineNodeActive: {
-    backgroundColor: colors.gold,
-  },
-  timelineNodeContent: {
-    alignItems: 'center',
-  },
-  timelineDot: {
-    width: wp(3),
-    height: wp(3),
-    borderRadius: wp(1.5),
-    backgroundColor: colors.black,
-    marginBottom: hp(1),
-  },
-  timelineDate: {
-    fontSize: fontSize(14),
-    fontFamily: fonts.bold,
-    color: colors.black,
-    marginBottom: hp(1),
-  },
-  timelineSummary: {
-    fontSize: fontSize(14),
-    fontFamily: fonts.regular,
-    color: colors.black,
-    opacity: 0.7,
-    textAlign: 'center',
-  },
-  profileContainer: {
-    flex: 1,
-  },
-  profileContent: {
-    padding: wp(6),
-  },
-  profileCard: {
-    backgroundColor: colors.white,
-    borderRadius: wp(4),
-    padding: wp(6),
-    shadowColor: colors.black,
-    shadowOffset: {
-      width: 0,
-      height: 4,
+    header: {
+      backgroundColor: colors.white,
+      paddingTop: Platform.OS === 'ios' ? hp(6) : STATUS_BAR_HEIGHT + hp(2),
+      paddingBottom: hp(3),
+      borderBottomWidth: 1,
+      borderBottomColor: colors.lightGray,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  profileHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: hp(4),
-  },
-  profileIconContainer: {
-    width: wp(12),
-    height: wp(12),
-    borderRadius: wp(6),
-    backgroundColor: colors.gold,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: wp(4),
-  },
-  profileIcon: {
-    width: wp(6),
-    height: wp(6),
-  },
-  profileHeaderText: {
-    flex: 1,
-  },
-  profileDate: {
-    fontSize: fontSize(20),
-    fontFamily: fonts.bold,
-    color: colors.black,
-    marginBottom: hp(0.5),
-  },
-  profileLabel: {
-    fontSize: fontSize(14),
-    fontFamily: fonts.regular,
-    color: colors.sand,
-  },
-  summarySection: {
-    marginBottom: hp(4),
-  },
-  sectionTitle: {
-    fontSize: fontSize(18),
-    fontFamily: fonts.bold,
-    color: colors.black,
-    marginBottom: hp(2),
-  },
-  profileSummary: {
-    fontSize: fontSize(16),
-    lineHeight: hp(3),
-    color: colors.black,
-    fontFamily: fonts.regular,
-  },
-  traitsSection: {
-    marginBottom: hp(4),
-  },
-  traitsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginHorizontal: -wp(2),
-  },
-  traitBadge: {
-    backgroundColor: colors.lightGray,
-    paddingHorizontal: wp(4),
-    paddingVertical: hp(1),
-    borderRadius: hp(2),
-    margin: wp(2),
-  },
-  traitText: {
-    color: colors.black,
-    fontSize: fontSize(14),
-    fontFamily: fonts.bold,
-  },
-  compareButton: {
-    backgroundColor: colors.gold,
-    padding: wp(4),
-    borderRadius: wp(3),
-    marginTop: hp(2),
-    shadowColor: colors.black,
-    shadowOffset: {
-      width: 0,
-      height: 2,
+    headerContent: {
+      paddingHorizontal: wp(6),
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  compareButtonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  compareIcon: {
-    width: wp(5),
-    height: wp(5),
-    marginRight: wp(2),
-  },
-  compareButtonText: {
-    fontSize: fontSize(16),
-    fontFamily: fonts.bold,
-    color: colors.white,
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: wp(6),
-  },
-  emptyStateIcon: {
-    width: wp(24),
-    height: wp(24),
-    marginBottom: hp(4),
-    opacity: 0.5,
-  },
-  emptyStateTitle: {
-    fontSize: fontSize(24),
-    fontFamily: fonts.bold,
-    color: colors.black,
-    marginBottom: hp(2),
-  },
-  emptyStateText: {
-    fontSize: fontSize(16),
-    fontFamily: fonts.regular,
-    color: colors.sand,
-    textAlign: 'center',
-    lineHeight: hp(2.5),
-  },
-  modalContainer: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    backgroundColor: colors.white,
-    borderTopLeftRadius: wp(6),
-    borderTopRightRadius: wp(6),
-    maxHeight: '90%',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: wp(6),
-    borderBottomWidth: 1,
-    borderBottomColor: colors.lightGray,
-  },
-  modalTitle: {
-    fontSize: fontSize(24),
-    fontFamily: fonts.bold,
-    color: colors.black,
-  },
-  closeButton: {
-    padding: wp(2),
-  },
-  closeIcon: {
-    width: wp(5),
-    height: wp(5),
-  },
-  modalScroll: {
-    padding: wp(6),
-  },
-  insightsSection: {
-    marginBottom: hp(4),
-  },
-  insightsTitle: {
-    fontSize: fontSize(20),
-    fontFamily: fonts.bold,
-    color: colors.black,
-    marginBottom: hp(2),
-  },
-  insightsText: {
-    fontSize: fontSize(16),
-    lineHeight: hp(3),
-    color: colors.black,
-    fontFamily: fonts.regular,
-  },
-  changesSection: {
-    marginBottom: hp(4),
-  },
-  changesTitle: {
-    fontSize: fontSize(20),
-    fontFamily: fonts.bold,
-    color: colors.black,
-    marginBottom: hp(2),
-  },
-  changeItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: hp(2),
-  },
-  changeIconContainer: {
-    width: wp(8),
-    height: wp(8),
-    borderRadius: wp(4),
-    backgroundColor: colors.gold,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: wp(3),
-  },
-  changeIcon: {
-    width: wp(4),
-    height: wp(4),
-  },
-  changeText: {
-    flex: 1,
-    fontSize: fontSize(16),
-    fontFamily: fonts.regular,
-    color: colors.black,
-    lineHeight: hp(2.5),
-  },
-});
+    headerTop: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    headerTextContainer: {
+      flex: 1,
+    },
+    headerIcon: {
+      width: wp(12),
+      height: wp(12),
+      marginLeft: wp(4),
+    },
+    title: {
+      fontSize: fontSize(32),
+      fontFamily: fonts.bold,
+      color: colors.black,
+      marginBottom: hp(1),
+    },
+    subtitle: {
+      fontSize: fontSize(16),
+      fontFamily: fonts.regular,
+      color: colors.sand,
+    },
+    timelineSection: {
+      backgroundColor: colors.white,
+      paddingVertical: hp(2),
+      borderBottomWidth: 1,
+      borderBottomColor: colors.lightGray,
+    },
+    timelineContent: {
+      paddingHorizontal: wp(6),
+    },
+    timelineNode: {
+      width: TIMELINE_ITEM_WIDTH,
+      marginHorizontal: TIMELINE_SPACING / 2,
+      backgroundColor: colors.white,
+      borderRadius: wp(4),
+      padding: wp(4),
+      shadowColor: colors.black,
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 2,
+    },
+    timelineNodeActive: {
+      backgroundColor: colors.gold,
+    },
+    timelineNodeContent: {
+      alignItems: 'center',
+    },
+    timelineDot: {
+      width: wp(3),
+      height: wp(3),
+      borderRadius: wp(1.5),
+      backgroundColor: colors.black,
+      marginBottom: hp(1),
+    },
+    timelineDate: {
+      fontSize: fontSize(14),
+      fontFamily: fonts.bold,
+      color: colors.black,
+      marginBottom: hp(1),
+    },
+    timelineSummary: {
+      fontSize: fontSize(14),
+      fontFamily: fonts.regular,
+      color: colors.black,
+      opacity: 0.7,
+      textAlign: 'center',
+    },
+    profileContainer: {
+      flex: 1,
+    },
+    profileContent: {
+      padding: wp(6),
+    },
+    profileCard: {
+      backgroundColor: colors.white,
+      borderRadius: wp(4),
+      padding: wp(6),
+      shadowColor: colors.black,
+      shadowOffset: {
+        width: 0,
+        height: 4,
+      },
+      shadowOpacity: 0.1,
+      shadowRadius: 8,
+      elevation: 4,
+    },
+    profileHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: hp(4),
+    },
+    profileIconContainer: {
+      width: wp(12),
+      height: wp(12),
+      borderRadius: wp(6),
+      backgroundColor: colors.gold,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: wp(4),
+    },
+    profileIcon: {
+      width: wp(6),
+      height: wp(6),
+    },
+    profileHeaderText: {
+      flex: 1,
+    },
+    profileDate: {
+      fontSize: fontSize(20),
+      fontFamily: fonts.bold,
+      color: colors.black,
+      marginBottom: hp(0.5),
+    },
+    profileLabel: {
+      fontSize: fontSize(14),
+      fontFamily: fonts.regular,
+      color: colors.sand,
+    },
+    summarySection: {
+      marginBottom: hp(4),
+    },
+    sectionTitle: {
+      fontSize: fontSize(18),
+      fontFamily: fonts.bold,
+      color: colors.black,
+      marginBottom: hp(2),
+    },
+    profileSummary: {
+      fontSize: fontSize(16),
+      lineHeight: hp(3),
+      color: colors.black,
+      fontFamily: fonts.regular,
+    },
+    traitsSection: {
+      marginBottom: hp(4),
+    },
+    traitsContainer: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      marginHorizontal: -wp(2),
+    },
+    traitBadge: {
+      backgroundColor: colors.lightGray,
+      paddingHorizontal: wp(4),
+      paddingVertical: hp(1),
+      borderRadius: hp(2),
+      margin: wp(2),
+    },
+    traitText: {
+      color: colors.black,
+      fontSize: fontSize(14),
+      fontFamily: fonts.bold,
+    },
+    compareButton: {
+      backgroundColor: colors.gold,
+      padding: wp(4),
+      borderRadius: wp(3),
+      marginTop: hp(2),
+      shadowColor: colors.black,
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 3,
+    },
+    compareButtonContent: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    compareIcon: {
+      width: wp(5),
+      height: wp(5),
+      marginRight: wp(2),
+    },
+    compareButtonText: {
+      fontSize: fontSize(16),
+      fontFamily: fonts.bold,
+      color: colors.white,
+    },
+    emptyState: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: wp(6),
+    },
+    emptyStateIcon: {
+      width: wp(24),
+      height: wp(24),
+      marginBottom: hp(4),
+      opacity: 0.5,
+    },
+    emptyStateTitle: {
+      fontSize: fontSize(24),
+      fontFamily: fonts.bold,
+      color: colors.black,
+      marginBottom: hp(2),
+    },
+    emptyStateText: {
+      fontSize: fontSize(16),
+      fontFamily: fonts.regular,
+      color: colors.sand,
+      textAlign: 'center',
+      lineHeight: hp(2.5),
+    },
+    modalContainer: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      justifyContent: 'flex-end',
+    },
+    modalContent: {
+      backgroundColor: colors.white,
+      borderTopLeftRadius: wp(6),
+      borderTopRightRadius: wp(6),
+      maxHeight: '90%',
+    },
+    modalHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: wp(6),
+      borderBottomWidth: 1,
+      borderBottomColor: colors.lightGray,
+    },
+    modalTitle: {
+      fontSize: fontSize(24),
+      fontFamily: fonts.bold,
+      color: colors.black,
+    },
+    closeButton: {
+      padding: wp(2),
+    },
+    closeIcon: {
+      width: wp(5),
+      height: wp(5),
+    },
+    modalScroll: {
+      padding: wp(6),
+    },
+    insightsSection: {
+      marginBottom: hp(4),
+    },
+    insightsTitle: {
+      fontSize: fontSize(20),
+      fontFamily: fonts.bold,
+      color: colors.black,
+      marginBottom: hp(2),
+    },
+    insightsText: {
+      fontSize: fontSize(16),
+      lineHeight: hp(3),
+      color: colors.black,
+      fontFamily: fonts.regular,
+    },
+    changesSection: {
+      marginBottom: hp(4),
+    },
+    changesTitle: {
+      fontSize: fontSize(20),
+      fontFamily: fonts.bold,
+      color: colors.black,
+      marginBottom: hp(2),
+    },
+    changeItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: hp(2),
+    },
+    changeIconContainer: {
+      width: wp(8),
+      height: wp(8),
+      borderRadius: wp(4),
+      backgroundColor: colors.gold,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: wp(3),
+    },
+    changeIcon: {
+      width: wp(4),
+      height: wp(4),
+    },
+    changeText: {
+      flex: 1,
+      fontSize: fontSize(16),
+      fontFamily: fonts.regular,
+      color: colors.black,
+      lineHeight: hp(2.5),
+    },
+  });
 
 export default EvolutionScreen;

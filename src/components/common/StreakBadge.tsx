@@ -8,7 +8,7 @@ import Animated, {
   interpolate,
   Extrapolate,
 } from 'react-native-reanimated';
-import {colors} from '../../constant/colors';
+import {useColors} from '../../constant/colors';
 import {fonts} from '../../constant/fonts';
 import {fontSize, hp, wp} from '../../helpers/globalFunction';
 
@@ -25,6 +25,8 @@ export const StreakBadge: React.FC<StreakBadgeProps> = ({
 }) => {
   const scale = useSharedValue(1);
   const opacity = useSharedValue(1);
+  const colors = useColors();
+  const styles = createStyles(colors);
 
   useEffect(() => {
     if (animatedValue) {
@@ -84,72 +86,73 @@ export const StreakBadge: React.FC<StreakBadgeProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: colors.white,
-    borderRadius: wp(4),
-    padding: wp(4),
-    marginHorizontal: wp(5),
-    marginVertical: hp(1),
-    shadowColor: colors.black,
-    shadowOffset: {
-      width: 0,
-      height: 2,
+const createStyles = colors =>
+  StyleSheet.create({
+    container: {
+      backgroundColor: colors.white,
+      borderRadius: wp(4),
+      padding: wp(4),
+      marginHorizontal: wp(5),
+      marginVertical: hp(1),
+      shadowColor: colors.black,
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.1,
+      shadowRadius: 3.84,
+      elevation: 5,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  streakContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  currentStreakContainer: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  bestStreakContainer: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  streakLabel: {
-    fontFamily: fonts.regular,
-    fontSize: fontSize(12),
-    color: colors.sand,
-    marginBottom: hp(0.5),
-  },
-  streakValue: {
-    fontFamily: fonts.bold,
-    fontSize: fontSize(24),
-    color: colors.black,
-    marginBottom: hp(0.2),
-  },
-  streakUnit: {
-    fontFamily: fonts.light,
-    fontSize: fontSize(12),
-    color: colors.sand,
-  },
-  divider: {
-    width: 1,
-    height: hp(4),
-    backgroundColor: colors.black,
-    marginHorizontal: wp(2),
-  },
-  flameContainer: {
-    width: wp(12),
-    height: wp(12),
-    borderRadius: wp(6),
-    backgroundColor: colors.gold + '20',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: wp(2),
-  },
-  flameEmoji: {
-    fontSize: fontSize(20),
-  },
-});
+    streakContainer: {
+      flex: 1,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    currentStreakContainer: {
+      flex: 1,
+      alignItems: 'center',
+    },
+    bestStreakContainer: {
+      flex: 1,
+      alignItems: 'center',
+    },
+    streakLabel: {
+      fontFamily: fonts.bold,
+      fontSize: fontSize(12),
+      color: colors.sand,
+      marginBottom: hp(0.5),
+    },
+    streakValue: {
+      fontFamily: fonts.bold,
+      fontSize: fontSize(24),
+      color: colors.black,
+      marginBottom: hp(0.2),
+    },
+    streakUnit: {
+      fontFamily: fonts.regular,
+      fontSize: fontSize(12),
+      color: colors.sand,
+    },
+    divider: {
+      width: 1,
+      height: hp(4),
+      backgroundColor: colors.black,
+      marginHorizontal: wp(2),
+    },
+    flameContainer: {
+      width: wp(12),
+      height: wp(12),
+      borderRadius: wp(6),
+      backgroundColor: colors.gold + '20',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginLeft: wp(2),
+    },
+    flameEmoji: {
+      fontSize: fontSize(20),
+    },
+  });

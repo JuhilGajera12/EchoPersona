@@ -11,8 +11,7 @@ import {
   StatusBar,
 } from 'react-native';
 import {useDispatch} from 'react-redux';
-import {useNavigation} from '@react-navigation/native';
-import {colors} from '../constant/colors';
+import {useColors} from '../constant/colors';
 import {fonts} from '../constant/fonts';
 import {icons} from '../constant/icons';
 import {fontSize, hp, wp} from '../helpers/globalFunction';
@@ -61,6 +60,8 @@ const OnboardingScreen = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
   const dispatch = useDispatch();
+  const colors = useColors();
+  const styles = createStyles(colors);
 
   const renderSlideItem = ({item}: {item: SlideItem}) => {
     return (
@@ -160,104 +161,105 @@ const OnboardingScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.white,
-  },
-  slide: {
-    width,
-    height: height * 0.8,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: wp(8),
-  },
-  imageContainer: {
-    width: wp(50),
-    height: wp(50),
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors.lightGray,
-    borderRadius: wp(25),
-    marginBottom: hp(5),
-  },
-  image: {
-    width: wp(30),
-    height: wp(30),
-  },
-  textContainer: {
-    alignItems: 'center',
-  },
-  title: {
-    fontSize: fontSize(28),
-    fontFamily: fonts.black,
-    color: colors.black,
-    textAlign: 'center',
-    marginBottom: hp(2),
-  },
-  description: {
-    fontSize: fontSize(16),
-    fontFamily: fonts.regular,
-    color: colors.black,
-    textAlign: 'center',
-    lineHeight: hp(3),
-  },
-  paginationContainer: {
-    height: hp(5),
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  dotsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  dot: {
-    width: wp(2.5),
-    height: wp(2.5),
-    borderRadius: wp(1.25),
-    marginHorizontal: wp(1),
-  },
-  buttonContainer: {
-    paddingHorizontal: wp(8),
-    paddingBottom: hp(5),
-    alignItems: 'center',
-  },
-  button: {
-    backgroundColor: colors.gold,
-    paddingVertical: hp(2),
-    paddingHorizontal: wp(10),
-    borderRadius: wp(8),
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: colors.black,
-    shadowOffset: {
-      width: 0,
-      height: 2,
+const createStyles = colors =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.white,
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  buttonText: {
-    color: colors.white,
-    fontSize: fontSize(18),
-    fontFamily: fonts.bold,
-  },
-  skipContainer: {
-    position: 'absolute',
-    top: hp(2),
-    right: wp(5),
-    zIndex: 1,
-  },
-  skipButton: {
-    padding: wp(2),
-  },
-  skipText: {
-    color: colors.black,
-    fontSize: fontSize(16),
-    fontFamily: fonts.bold,
-  },
-});
+    slide: {
+      width,
+      height: height * 0.8,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingHorizontal: wp(8),
+    },
+    imageContainer: {
+      width: wp(50),
+      height: wp(50),
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: colors.lightGray,
+      borderRadius: wp(25),
+      marginBottom: hp(5),
+    },
+    image: {
+      width: wp(30),
+      height: wp(30),
+    },
+    textContainer: {
+      alignItems: 'center',
+    },
+    title: {
+      fontSize: fontSize(28),
+      fontFamily: fonts.black,
+      color: colors.black,
+      textAlign: 'center',
+      marginBottom: hp(2),
+    },
+    description: {
+      fontSize: fontSize(16),
+      fontFamily: fonts.regular,
+      color: colors.black,
+      textAlign: 'center',
+      lineHeight: hp(3),
+    },
+    paginationContainer: {
+      height: hp(5),
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    dotsContainer: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    dot: {
+      width: wp(2.5),
+      height: wp(2.5),
+      borderRadius: wp(1.25),
+      marginHorizontal: wp(1),
+    },
+    buttonContainer: {
+      paddingHorizontal: wp(8),
+      paddingBottom: hp(5),
+      alignItems: 'center',
+    },
+    button: {
+      backgroundColor: colors.gold,
+      paddingVertical: hp(2),
+      paddingHorizontal: wp(10),
+      borderRadius: wp(8),
+      alignItems: 'center',
+      justifyContent: 'center',
+      shadowColor: colors.black,
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.25,
+      shadowRadius: 3.84,
+      elevation: 5,
+    },
+    buttonText: {
+      color: colors.white,
+      fontSize: fontSize(18),
+      fontFamily: fonts.bold,
+    },
+    skipContainer: {
+      position: 'absolute',
+      top: hp(2),
+      right: wp(5),
+      zIndex: 1,
+    },
+    skipButton: {
+      padding: wp(2),
+    },
+    skipText: {
+      color: colors.black,
+      fontSize: fontSize(16),
+      fontFamily: fonts.bold,
+    },
+  });
 
 export default OnboardingScreen;

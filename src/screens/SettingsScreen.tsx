@@ -17,18 +17,19 @@ import {clearEntries} from '../store/slices/journalSlice';
 import {clearSubscription} from '../store/slices/premiumSlice';
 import {clearPromptHistory} from '../store/slices/promptSlice';
 import {logout, deleteAccount} from '../store/slices/authSlice';
-import {colors} from '../constant/colors';
+import {useColors} from '../constant/colors';
 import {fonts} from '../constant/fonts';
 import {icons} from '../constant/icons';
 import {fontSize, hp, wp} from '../helpers/globalFunction';
 import ConfirmationModal from '../components/ConfirmationModal';
+import {setDarkMode} from '../store/slices/themeSlice';
 
 const STATUS_BAR_HEIGHT =
   Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0;
 
 const SettingsScreen = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const isDarkMode = useSelector((state: RootState) => state.theme.isDarkMode);
   const [modalConfig, setModalConfig] = useState<{
     visible: boolean;
     title: string;
@@ -44,6 +45,8 @@ const SettingsScreen = () => {
     onConfirm: async () => {},
   });
 
+  const colors = useColors();
+  const styles = createStyles(colors);
   const isPremium = useSelector((state: RootState) => state.premium.isPremium);
   const auth = useSelector((state: RootState) => state.auth);
   const isLoading = auth.isLoading;
@@ -169,7 +172,7 @@ const SettingsScreen = () => {
             'Dark Mode',
             <Switch
               value={isDarkMode}
-              onValueChange={setIsDarkMode}
+              onValueChange={value => dispatch(setDarkMode(value))}
               trackColor={{false: colors.lightGray, true: colors.gold}}
               thumbColor={colors.white}
             />,
@@ -248,146 +251,147 @@ const SettingsScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.white,
-  },
-  header: {
-    paddingBottom: hp(3),
-    paddingHorizontal: wp(6),
-    backgroundColor: colors.white,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.lightGray,
-  },
-  headerTitle: {
-    fontSize: fontSize(32),
-    fontFamily: fonts.bold,
-    color: colors.black,
-    marginBottom: hp(1),
-  },
-  headerSubtitle: {
-    fontSize: fontSize(16),
-    fontFamily: fonts.regular,
-    color: colors.sand,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  section: {
-    paddingHorizontal: wp(6),
-    paddingVertical: hp(3),
-    borderBottomWidth: 1,
-    borderBottomColor: colors.lightGray,
-  },
-  sectionTitle: {
-    fontSize: fontSize(18),
-    fontFamily: fonts.bold,
-    color: colors.black,
-    marginBottom: hp(2),
-  },
-  settingItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: hp(1.5),
-    marginVertical: hp(0.5),
-  },
-  settingItemPressable: {
-    opacity: 1,
-  },
-  settingInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  iconContainer: {
-    width: wp(10),
-    height: wp(10),
-    borderRadius: wp(5),
-    backgroundColor: colors.lightGray,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: wp(4),
-  },
-  dangerIconContainer: {
-    backgroundColor: colors.lightGray,
-  },
-  settingIcon: {
-    width: wp(5),
-    height: wp(5),
-  },
-  dangerIcon: {
-    tintColor: colors.black,
-  },
-  settingText: {
-    fontSize: fontSize(16),
-    fontFamily: fonts.regular,
-    color: colors.black,
-    flex: 1,
-  },
-  dangerText: {
-    color: colors.black,
-    fontFamily: fonts.bold,
-  },
-  statusBadge: {
-    paddingHorizontal: wp(3),
-    paddingVertical: hp(0.5),
-    borderRadius: wp(4),
-    backgroundColor: colors.lightGray,
-  },
-  activeBadge: {
-    backgroundColor: colors.gold,
-  },
-  statusText: {
-    fontSize: fontSize(14),
-    fontFamily: fonts.regular,
-    color: colors.sand,
-  },
-  activeStatusText: {
-    color: colors.white,
-  },
-  logoutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    margin: wp(6),
-    padding: wp(4),
-    backgroundColor: colors.lightGray,
-    borderRadius: wp(3),
-    shadowColor: colors.black,
-    shadowOffset: {
-      width: 0,
-      height: 2,
+const createStyles = colors =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.white,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  logoutIcon: {
-    width: wp(5),
-    height: wp(5),
-    marginRight: wp(2),
-  },
-  logoutText: {
-    fontSize: fontSize(16),
-    fontFamily: fonts.bold,
-    color: colors.black,
-  },
-  version: {
-    textAlign: 'center',
-    fontSize: fontSize(14),
-    fontFamily: fonts.regular,
-    color: colors.sand,
-    marginBottom: hp(8),
-  },
-  disabledText: {
-    fontSize: fontSize(14),
-    fontFamily: fonts.regular,
-    color: colors.error,
-    marginTop: hp(1),
-    marginLeft: wp(14),
-  },
-});
+    header: {
+      paddingBottom: hp(3),
+      paddingHorizontal: wp(6),
+      backgroundColor: colors.white,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.lightGray,
+    },
+    headerTitle: {
+      fontSize: fontSize(32),
+      fontFamily: fonts.bold,
+      color: colors.black,
+      marginBottom: hp(1),
+    },
+    headerSubtitle: {
+      fontSize: fontSize(16),
+      fontFamily: fonts.regular,
+      color: colors.sand,
+    },
+    scrollView: {
+      flex: 1,
+    },
+    section: {
+      paddingHorizontal: wp(6),
+      paddingVertical: hp(3),
+      borderBottomWidth: 1,
+      borderBottomColor: colors.lightGray,
+    },
+    sectionTitle: {
+      fontSize: fontSize(18),
+      fontFamily: fonts.bold,
+      color: colors.black,
+      marginBottom: hp(2),
+    },
+    settingItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingVertical: hp(1.5),
+      marginVertical: hp(0.5),
+    },
+    settingItemPressable: {
+      opacity: 1,
+    },
+    settingInfo: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flex: 1,
+    },
+    iconContainer: {
+      width: wp(10),
+      height: wp(10),
+      borderRadius: wp(5),
+      backgroundColor: colors.lightGray,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: wp(4),
+    },
+    dangerIconContainer: {
+      backgroundColor: colors.lightGray,
+    },
+    settingIcon: {
+      width: wp(5),
+      height: wp(5),
+    },
+    dangerIcon: {
+      tintColor: colors.black,
+    },
+    settingText: {
+      fontSize: fontSize(16),
+      fontFamily: fonts.regular,
+      color: colors.black,
+      flex: 1,
+    },
+    dangerText: {
+      color: colors.black,
+      fontFamily: fonts.bold,
+    },
+    statusBadge: {
+      paddingHorizontal: wp(3),
+      paddingVertical: hp(0.5),
+      borderRadius: wp(4),
+      backgroundColor: colors.lightGray,
+    },
+    activeBadge: {
+      backgroundColor: colors.gold,
+    },
+    statusText: {
+      fontSize: fontSize(14),
+      fontFamily: fonts.regular,
+      color: colors.sand,
+    },
+    activeStatusText: {
+      color: colors.white,
+    },
+    logoutButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      margin: wp(6),
+      padding: wp(4),
+      backgroundColor: colors.lightGray,
+      borderRadius: wp(3),
+      shadowColor: colors.black,
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 3,
+    },
+    logoutIcon: {
+      width: wp(5),
+      height: wp(5),
+      marginRight: wp(2),
+    },
+    logoutText: {
+      fontSize: fontSize(16),
+      fontFamily: fonts.bold,
+      color: colors.black,
+    },
+    version: {
+      textAlign: 'center',
+      fontSize: fontSize(14),
+      fontFamily: fonts.regular,
+      color: colors.sand,
+      marginBottom: hp(8),
+    },
+    disabledText: {
+      fontSize: fontSize(14),
+      fontFamily: fonts.regular,
+      color: colors.error,
+      marginTop: hp(1),
+      marginLeft: wp(14),
+    },
+  });
 
 export default SettingsScreen;

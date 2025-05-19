@@ -8,24 +8,19 @@ import {
   Image,
   Platform,
   StatusBar,
-  Modal,
   ActivityIndicator,
-  ViewStyle,
   Animated,
-  Easing,
-  Dimensions,
   SafeAreaView,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {RootState} from '../store';
 import {setPremiumStatus} from '../store/slices/premiumSlice';
 import {icons} from '../constant/icons';
-import {colors} from '../constant/colors';
+import {useColors} from '../constant/colors';
 import {fontSize, hp, wp} from '../helpers/globalFunction';
 import {fonts} from '../constant/fonts';
 import LinearGradient from 'react-native-linear-gradient';
 
-const {width: SCREEN_WIDTH} = Dimensions.get('window');
 const ANIMATION_DURATION = 300;
 
 interface PremiumFeature {
@@ -106,6 +101,8 @@ const PremiumScreen = () => {
   const [error, setError] = useState<string | null>(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
+  const colors = useColors();
+  const styles = createStyles(colors);
 
   useEffect(() => {
     Animated.parallel([
@@ -211,7 +208,7 @@ const PremiumScreen = () => {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={colors.black} />
       <LinearGradient
-        colors={[colors.black, '#1a1a1a']}
+        colors={[colors.black, colors.black]}
         style={styles.headerGradient}>
         <View style={styles.headerContent}>
           <Text style={styles.title}>Upgrade to Premium</Text>
@@ -329,275 +326,276 @@ const PremiumScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.white,
-  },
-  headerGradient: {
-    paddingTop: Platform.OS === 'ios' ? hp(2) : hp(4),
-    paddingBottom: hp(4),
-    borderBottomLeftRadius: wp(4),
-    borderBottomRightRadius: wp(4),
-  },
-  headerContent: {
-    alignItems: 'center',
-    paddingHorizontal: wp(6),
-  },
-  premiumBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    paddingVertical: hp(1),
-    paddingHorizontal: wp(4),
-    borderRadius: wp(4),
-    marginBottom: hp(2),
-  },
-  premiumIcon: {
-    width: wp(5),
-    height: wp(5),
-    marginRight: wp(2),
-  },
-  premiumBadgeText: {
-    color: colors.gold,
-    fontSize: fontSize(14),
-    fontFamily: fonts.bold,
-  },
-  premiumTitle: {
-    fontSize: fontSize(32),
-    fontFamily: fonts.bold,
-    color: colors.white,
-    marginBottom: hp(1),
-    textAlign: 'center',
-  },
-  premiumSubtitle: {
-    fontSize: fontSize(16),
-    fontFamily: fonts.regular,
-    color: colors.white,
-    opacity: 0.8,
-    textAlign: 'center',
-  },
-  title: {
-    fontSize: fontSize(32),
-    fontFamily: fonts.bold,
-    color: colors.white,
-    marginBottom: hp(1),
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: fontSize(16),
-    fontFamily: fonts.regular,
-    color: colors.white,
-    opacity: 0.8,
-    textAlign: 'center',
-    lineHeight: hp(2.5),
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: Platform.OS === 'ios' ? hp(5) : hp(3),
-    paddingHorizontal: wp(6),
-  },
-  plansContainer: {
-    paddingTop: hp(2),
-  },
-  planSelector: {
-    flexDirection: 'row',
-    backgroundColor: colors.lightGray,
-    borderRadius: wp(3),
-    padding: wp(1),
-    marginBottom: hp(4),
-  },
-  planButton: {
-    flex: 1,
-    paddingVertical: hp(1.5),
-    paddingHorizontal: wp(3),
-    borderRadius: wp(2),
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  planButtonActive: {
-    backgroundColor: colors.white,
-    shadowColor: colors.black,
-    shadowOffset: {
-      width: 0,
-      height: 2,
+const createStyles = colors =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.white,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  yearlyButtonContent: {
-    alignItems: 'center',
-  },
-  planButtonText: {
-    fontSize: fontSize(16),
-    fontFamily: fonts.regular,
-    color: colors.black,
-  },
-  planButtonTextActive: {
-    fontFamily: fonts.bold,
-  },
-  savingsBadge: {
-    backgroundColor: colors.gold,
-    paddingVertical: hp(0.5),
-    paddingHorizontal: wp(2),
-    borderRadius: wp(2),
-    marginTop: hp(0.5),
-  },
-  savingsText: {
-    color: colors.white,
-    fontSize: fontSize(12),
-    fontFamily: fonts.bold,
-  },
-  planCard: {
-    borderRadius: wp(6),
-    overflow: 'hidden',
-    marginBottom: hp(4),
-    shadowColor: colors.black,
-    shadowOffset: {
-      width: 0,
-      height: 4,
+    headerGradient: {
+      paddingTop: Platform.OS === 'ios' ? hp(2) : hp(4),
+      paddingBottom: hp(4),
+      borderBottomLeftRadius: wp(4),
+      borderBottomRightRadius: wp(4),
     },
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  planGradient: {
-    padding: wp(6),
-  },
-  planHeader: {
-    alignItems: 'center',
-    marginBottom: hp(4),
-  },
-  planName: {
-    fontSize: fontSize(24),
-    fontFamily: fonts.bold,
-    color: colors.white,
-    marginBottom: hp(2),
-  },
-  priceContainer: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'center',
-  },
-  currency: {
-    fontSize: fontSize(24),
-    fontFamily: fonts.bold,
-    color: colors.white,
-    marginRight: wp(1),
-  },
-  planPrice: {
-    fontSize: fontSize(48),
-    fontFamily: fonts.bold,
-    color: colors.white,
-  },
-  planPeriod: {
-    fontSize: fontSize(16),
-    fontFamily: fonts.regular,
-    color: colors.white,
-    opacity: 0.8,
-  },
-  upgradeButton: {
-    backgroundColor: colors.black,
-    paddingVertical: hp(2),
-    borderRadius: wp(3),
-    alignItems: 'center',
-  },
-  upgradeButtonText: {
-    fontSize: fontSize(18),
-    fontFamily: fonts.bold,
-    color: colors.white,
-  },
-  featuresSection: {
-    marginBottom: hp(2),
-  },
-  sectionTitle: {
-    fontSize: fontSize(20),
-    fontFamily: fonts.bold,
-    color: colors.black,
-    marginBottom: hp(2),
-  },
-  featureItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.white,
-    padding: wp(4),
-    borderRadius: wp(4),
-    marginBottom: hp(2),
-    shadowColor: colors.black,
-    shadowOffset: {
-      width: 0,
-      height: 2,
+    headerContent: {
+      alignItems: 'center',
+      paddingHorizontal: wp(6),
     },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  featureIconContainer: {
-    width: wp(12),
-    height: wp(12),
-    borderRadius: wp(6),
-    backgroundColor: colors.lightGray,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: wp(4),
-  },
-  premiumFeatureIcon: {
-    backgroundColor: colors.gold,
-  },
-  featureIcon: {
-    width: wp(6),
-    height: wp(6),
-  },
-  featureTextContainer: {
-    flex: 1,
-  },
-  featureTitle: {
-    fontSize: fontSize(16),
-    fontFamily: fonts.bold,
-    color: colors.black,
-    marginBottom: hp(0.5),
-  },
-  premiumFeatureTitle: {
-    fontSize: fontSize(16),
-    fontFamily: fonts.bold,
-    color: colors.black,
-    marginBottom: hp(0.5),
-  },
-  featureDescription: {
-    fontSize: fontSize(14),
-    fontFamily: fonts.regular,
-    color: colors.sand,
-    lineHeight: hp(2.5),
-  },
-  premiumFeatureDescription: {
-    color: colors.sand,
-    opacity: 0.9,
-  },
-  errorContainer: {
-    backgroundColor: colors.lightGray,
-    padding: wp(4),
-    borderRadius: wp(3),
-    marginBottom: hp(3),
-  },
-  errorText: {
-    color: colors.black,
-    fontSize: fontSize(14),
-    fontFamily: fonts.regular,
-    textAlign: 'center',
-  },
-  terms: {
-    fontSize: fontSize(14),
-    fontFamily: fonts.regular,
-    color: colors.sand,
-    textAlign: 'center',
-  },
-  premiumFeatureText: {
-    paddingHorizontal: wp(6),
-    paddingTop: hp(2),
-  },
-});
+    premiumBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+      paddingVertical: hp(1),
+      paddingHorizontal: wp(4),
+      borderRadius: wp(4),
+      marginBottom: hp(2),
+    },
+    premiumIcon: {
+      width: wp(5),
+      height: wp(5),
+      marginRight: wp(2),
+    },
+    premiumBadgeText: {
+      color: colors.gold,
+      fontSize: fontSize(14),
+      fontFamily: fonts.bold,
+    },
+    premiumTitle: {
+      fontSize: fontSize(32),
+      fontFamily: fonts.bold,
+      color: colors.white,
+      marginBottom: hp(1),
+      textAlign: 'center',
+    },
+    premiumSubtitle: {
+      fontSize: fontSize(16),
+      fontFamily: fonts.regular,
+      color: colors.white,
+      opacity: 0.8,
+      textAlign: 'center',
+    },
+    title: {
+      fontSize: fontSize(32),
+      fontFamily: fonts.bold,
+      color: colors.white,
+      marginBottom: hp(1),
+      textAlign: 'center',
+    },
+    subtitle: {
+      fontSize: fontSize(16),
+      fontFamily: fonts.regular,
+      color: colors.white,
+      opacity: 0.8,
+      textAlign: 'center',
+      lineHeight: hp(2.5),
+    },
+    scrollView: {
+      flex: 1,
+    },
+    scrollContent: {
+      paddingBottom: Platform.OS === 'ios' ? hp(5) : hp(3),
+      paddingHorizontal: wp(6),
+    },
+    plansContainer: {
+      paddingTop: hp(2),
+    },
+    planSelector: {
+      flexDirection: 'row',
+      backgroundColor: colors.lightGray,
+      borderRadius: wp(3),
+      padding: wp(1),
+      marginBottom: hp(4),
+    },
+    planButton: {
+      flex: 1,
+      paddingVertical: hp(1.5),
+      paddingHorizontal: wp(3),
+      borderRadius: wp(2),
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    planButtonActive: {
+      backgroundColor: colors.white,
+      shadowColor: colors.black,
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 2,
+    },
+    yearlyButtonContent: {
+      alignItems: 'center',
+    },
+    planButtonText: {
+      fontSize: fontSize(16),
+      fontFamily: fonts.regular,
+      color: colors.black,
+    },
+    planButtonTextActive: {
+      fontFamily: fonts.bold,
+    },
+    savingsBadge: {
+      backgroundColor: colors.gold,
+      paddingVertical: hp(0.5),
+      paddingHorizontal: wp(2),
+      borderRadius: wp(2),
+      marginTop: hp(0.5),
+    },
+    savingsText: {
+      color: colors.white,
+      fontSize: fontSize(12),
+      fontFamily: fonts.bold,
+    },
+    planCard: {
+      borderRadius: wp(6),
+      overflow: 'hidden',
+      marginBottom: hp(4),
+      shadowColor: colors.black,
+      shadowOffset: {
+        width: 0,
+        height: 4,
+      },
+      shadowOpacity: 0.2,
+      shadowRadius: 12,
+      elevation: 8,
+    },
+    planGradient: {
+      padding: wp(6),
+    },
+    planHeader: {
+      alignItems: 'center',
+      marginBottom: hp(4),
+    },
+    planName: {
+      fontSize: fontSize(24),
+      fontFamily: fonts.bold,
+      color: colors.white,
+      marginBottom: hp(2),
+    },
+    priceContainer: {
+      flexDirection: 'row',
+      alignItems: 'baseline',
+      justifyContent: 'center',
+    },
+    currency: {
+      fontSize: fontSize(24),
+      fontFamily: fonts.bold,
+      color: colors.white,
+      marginRight: wp(1),
+    },
+    planPrice: {
+      fontSize: fontSize(48),
+      fontFamily: fonts.bold,
+      color: colors.white,
+    },
+    planPeriod: {
+      fontSize: fontSize(16),
+      fontFamily: fonts.regular,
+      color: colors.white,
+      opacity: 0.8,
+    },
+    upgradeButton: {
+      backgroundColor: colors.black,
+      paddingVertical: hp(2),
+      borderRadius: wp(3),
+      alignItems: 'center',
+    },
+    upgradeButtonText: {
+      fontSize: fontSize(18),
+      fontFamily: fonts.bold,
+      color: colors.white,
+    },
+    featuresSection: {
+      marginBottom: hp(2),
+    },
+    sectionTitle: {
+      fontSize: fontSize(20),
+      fontFamily: fonts.bold,
+      color: colors.black,
+      marginBottom: hp(2),
+    },
+    featureItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.white,
+      padding: wp(4),
+      borderRadius: wp(4),
+      marginBottom: hp(2),
+      shadowColor: colors.black,
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.05,
+      shadowRadius: 8,
+      elevation: 2,
+    },
+    featureIconContainer: {
+      width: wp(12),
+      height: wp(12),
+      borderRadius: wp(6),
+      backgroundColor: colors.lightGray,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: wp(4),
+    },
+    premiumFeatureIcon: {
+      backgroundColor: colors.gold,
+    },
+    featureIcon: {
+      width: wp(6),
+      height: wp(6),
+    },
+    featureTextContainer: {
+      flex: 1,
+    },
+    featureTitle: {
+      fontSize: fontSize(16),
+      fontFamily: fonts.bold,
+      color: colors.black,
+      marginBottom: hp(0.5),
+    },
+    premiumFeatureTitle: {
+      fontSize: fontSize(16),
+      fontFamily: fonts.bold,
+      color: colors.black,
+      marginBottom: hp(0.5),
+    },
+    featureDescription: {
+      fontSize: fontSize(14),
+      fontFamily: fonts.regular,
+      color: colors.sand,
+      lineHeight: hp(2.5),
+    },
+    premiumFeatureDescription: {
+      color: colors.sand,
+      opacity: 0.9,
+    },
+    errorContainer: {
+      backgroundColor: colors.lightGray,
+      padding: wp(4),
+      borderRadius: wp(3),
+      marginBottom: hp(3),
+    },
+    errorText: {
+      color: colors.black,
+      fontSize: fontSize(14),
+      fontFamily: fonts.regular,
+      textAlign: 'center',
+    },
+    terms: {
+      fontSize: fontSize(14),
+      fontFamily: fonts.regular,
+      color: colors.sand,
+      textAlign: 'center',
+    },
+    premiumFeatureText: {
+      paddingHorizontal: wp(6),
+      paddingTop: hp(2),
+    },
+  });
 
 export default PremiumScreen;

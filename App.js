@@ -1,18 +1,23 @@
 import React, {memo, useEffect} from 'react';
-import {Provider} from 'react-redux';
-import {PersistGate} from 'redux-persist/integration/react';
-import {store, persistor} from './src/store';
+import {useDispatch} from 'react-redux';
 import {NavigationContainer} from '@react-navigation/native';
 import {StyleSheet, SafeAreaView, StatusBar} from 'react-native';
 import BootSplash from 'react-native-bootsplash';
 import AuthNavigator from './src/components/AuthNavigator';
-import {colors} from './src/constant/colors';
+import {useColors} from './src/constant/colors';
 import {navigationRef} from './src/helpers/globalFunction';
+import {getSystemTheme} from './src/utils/themeUtils';
+import {setDarkMode} from './src/store/slices/themeSlice';
 
 const App = memo(() => {
+  const dispatch = useDispatch();
+  const colors = useColors();
+  const styles = createStyles(colors);
+
   useEffect(() => {
     const init = async () => {
-      // …do multiple sync or async tasks
+      const systemThemeIsDark = getSystemTheme();
+      dispatch(setDarkMode(systemThemeIsDark));
     };
 
     init().finally(async () => {
@@ -21,24 +26,21 @@ const App = memo(() => {
   }, []);
 
   return (
-    <Provider store={store}>
-      <PersistGate loading={null} persistor={persistor}>
-        <SafeAreaView style={styles.container}>
-          <StatusBar barStyle="dark-content" translucent />
-          <NavigationContainer ref={navigationRef}>
-            <AuthNavigator />
-          </NavigationContainer>
-        </SafeAreaView>
-      </PersistGate>
-    </Provider>
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" translucent />
+      <NavigationContainer ref={navigationRef}>
+        <AuthNavigator />
+      </NavigationContainer>
+    </SafeAreaView>
   );
 });
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background || colors.white,
-  },
-});
+const createStyles = colors =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background || colors.white,
+    },
+  });
 
 export default App;

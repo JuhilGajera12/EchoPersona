@@ -8,7 +8,7 @@ import {
   TouchableWithoutFeedback,
   ActivityIndicator,
 } from 'react-native';
-import {colors} from '../constant/colors';
+import {useColors} from '../constant/colors';
 import {fonts} from '../constant/fonts';
 import {fontSize, hp, wp} from '../helpers/globalFunction';
 
@@ -35,6 +35,8 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   isLoading,
   isDanger = false,
 }) => {
+  const colors = useColors();
+  const styles = createStyles(colors);
   return (
     <Modal
       animationType="fade"
@@ -90,86 +92,87 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContainer: {
-    width: wp(80),
-    backgroundColor: colors.white,
-    borderRadius: wp(4),
-    overflow: 'hidden',
-    shadowColor: colors.black,
-    shadowOffset: {
-      width: 0,
-      height: 2,
+const createStyles = colors =>
+  StyleSheet.create({
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      justifyContent: 'center',
+      alignItems: 'center',
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  modalHeader: {
-    paddingTop: hp(3),
-    paddingHorizontal: wp(5),
-    alignItems: 'center',
-  },
-  modalTitle: {
-    fontSize: fontSize(20),
-    fontFamily: fonts.bold,
-    color: colors.black,
-    textAlign: 'center',
-  },
-  modalBody: {
-    paddingTop: hp(2),
-    paddingBottom: hp(3),
-    paddingHorizontal: wp(5),
-  },
-  modalMessage: {
-    fontSize: fontSize(16),
-    fontFamily: fonts.regular,
-    color: colors.black,
-    textAlign: 'center',
-  },
-  modalFooter: {
-    flexDirection: 'row',
-    borderTopWidth: 1,
-    borderTopColor: colors.lightGray,
-  },
-  modalButton: {
-    flex: 1,
-    paddingVertical: hp(2),
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cancelButton: {
-    borderRightWidth: 1,
-    borderRightColor: colors.lightGray,
-  },
-  confirmButton: {
-    backgroundColor: colors.gold,
-  },
-  dangerButton: {
-    backgroundColor: colors.error,
-  },
-  disabledButton: {
-    opacity: 0.7,
-  },
-  cancelButtonText: {
-    fontSize: fontSize(16),
-    fontFamily: fonts.bold,
-    color: colors.black,
-  },
-  confirmButtonText: {
-    fontSize: fontSize(16),
-    fontFamily: fonts.bold,
-    color: colors.white,
-  },
-  dangerButtonText: {
-    color: colors.white,
-  },
-});
+    modalContainer: {
+      width: wp(80),
+      backgroundColor: colors.white,
+      borderRadius: wp(4),
+      overflow: 'hidden',
+      shadowColor: colors.black,
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.25,
+      shadowRadius: 4,
+      elevation: 5,
+    },
+    modalHeader: {
+      paddingTop: hp(3),
+      paddingHorizontal: wp(5),
+      alignItems: 'center',
+    },
+    modalTitle: {
+      fontSize: fontSize(20),
+      fontFamily: fonts.bold,
+      color: colors.black,
+      textAlign: 'center',
+    },
+    modalBody: {
+      paddingTop: hp(2),
+      paddingBottom: hp(3),
+      paddingHorizontal: wp(5),
+    },
+    modalMessage: {
+      fontSize: fontSize(16),
+      fontFamily: fonts.regular,
+      color: colors.black,
+      textAlign: 'center',
+    },
+    modalFooter: {
+      flexDirection: 'row',
+      borderTopWidth: 1,
+      borderTopColor: colors.lightGray,
+    },
+    modalButton: {
+      flex: 1,
+      paddingVertical: hp(2),
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    cancelButton: {
+      borderRightWidth: 1,
+      borderRightColor: colors.lightGray,
+    },
+    confirmButton: {
+      backgroundColor: colors.gold,
+    },
+    dangerButton: {
+      backgroundColor: colors.error,
+    },
+    disabledButton: {
+      opacity: 0.7,
+    },
+    cancelButtonText: {
+      fontSize: fontSize(16),
+      fontFamily: fonts.bold,
+      color: colors.black,
+    },
+    confirmButtonText: {
+      fontSize: fontSize(16),
+      fontFamily: fonts.bold,
+      color: colors.white,
+    },
+    dangerButtonText: {
+      color: colors.white,
+    },
+  });
 
 export default ConfirmationModal;

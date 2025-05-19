@@ -14,7 +14,7 @@ import {
   ScrollView,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
-import {colors} from '../constant/colors';
+import {useColors} from '../constant/colors';
 import {fontSize, hp, wp} from '../helpers/globalFunction';
 import {fonts} from '../constant/fonts';
 import {icons} from '../constant/icons';
@@ -35,6 +35,8 @@ interface JournalEntry {
 
 const JournalEntryCard = memo(
   ({item, onPress}: {item: JournalEntry; onPress: () => void}) => {
+    const colors = useColors();
+    const styles = createStyles(colors);
     const formatDate = (timestamp: string) => {
       const date = new Date(timestamp);
       return date.toLocaleDateString('en-US', {
@@ -92,6 +94,8 @@ const JournalScreen = () => {
   const slideAnim = useRef(new Animated.Value(50)).current;
   const audioRecorderPlayer = useRef(new AudioRecorderPlayer()).current;
   const isListener = useRef<any | null>(null);
+  const colors = useColors();
+  const styles = createStyles(colors);
 
   const entries = useSelector((state: RootState) => state.journal.entries);
 
@@ -379,322 +383,323 @@ const JournalScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.white,
-  },
-  header: {
-    backgroundColor: colors.white,
-    paddingTop: Platform.OS === 'ios' ? hp(6) : STATUS_BAR_HEIGHT + hp(2),
-    paddingBottom: hp(2),
-    borderBottomWidth: 1,
-    borderBottomColor: colors.lightGray,
-  },
-  headerContent: {
-    alignItems: 'center',
-    paddingHorizontal: wp(6),
-  },
-  headerIcon: {
-    width: wp(12),
-    height: wp(12),
-    marginBottom: hp(2),
-  },
-  title: {
-    fontSize: fontSize(32),
-    fontFamily: fonts.black,
-    color: colors.black,
-    marginBottom: hp(1),
-  },
-  subtitle: {
-    fontSize: fontSize(16),
-    fontFamily: fonts.regular,
-    color: colors.black,
-    opacity: 0.7,
-    textAlign: 'center',
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    margin: hp(2),
-    paddingHorizontal: wp(4),
-    height: hp(6),
-    backgroundColor: colors.lightGray,
-    borderRadius: wp(4),
-    shadowColor: colors.black,
-    shadowOffset: {
-      width: 0,
-      height: 2,
+const createStyles = colors =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.white,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  searchIcon: {
-    width: wp(5),
-    height: wp(5),
-    marginRight: wp(3),
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: fontSize(16),
-    color: colors.black,
-    fontFamily: fonts.regular,
-  },
-  listContainer: {
-    padding: wp(5),
-  },
-  entryCard: {
-    backgroundColor: colors.white,
-    padding: wp(5),
-    borderRadius: wp(4),
-    marginBottom: hp(2),
-    shadowColor: colors.black,
-    shadowOffset: {
-      width: 0,
-      height: 4,
+    header: {
+      backgroundColor: colors.white,
+      paddingTop: Platform.OS === 'ios' ? hp(6) : STATUS_BAR_HEIGHT + hp(2),
+      paddingBottom: hp(2),
+      borderBottomWidth: 1,
+      borderBottomColor: colors.lightGray,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  entryHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: hp(1.5),
-  },
-  dateContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  dateIcon: {
-    width: wp(4),
-    height: wp(4),
-    marginRight: wp(2),
-  },
-  dateText: {
-    fontSize: fontSize(14),
-    color: colors.sand,
-    fontFamily: fonts.regular,
-  },
-  promptText: {
-    fontSize: fontSize(18),
-    color: colors.black,
-    marginBottom: hp(1.5),
-    fontFamily: fonts.bold,
-    lineHeight: hp(2.5),
-  },
-  responseText: {
-    fontSize: fontSize(16),
-    color: colors.black,
-    opacity: 0.8,
-    fontFamily: fonts.regular,
-    lineHeight: hp(2.3),
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: wp(6),
-    marginTop: hp(10),
-  },
-  emptyStateIcon: {
-    width: wp(24),
-    height: wp(24),
-    marginBottom: hp(4),
-    opacity: 0.5,
-  },
-  emptyStateTitle: {
-    fontSize: fontSize(24),
-    fontFamily: fonts.bold,
-    color: colors.black,
-    marginBottom: hp(2),
-  },
-  emptyStateText: {
-    fontSize: fontSize(16),
-    fontFamily: fonts.regular,
-    color: colors.black,
-    textAlign: 'center',
-    opacity: 0.7,
-    lineHeight: hp(2.5),
-  },
-  modalContainer: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: wp(5),
-  },
-  modalContent: {
-    backgroundColor: colors.white,
-    borderRadius: wp(6),
-    width: '100%',
-    maxWidth: wp(90),
-    maxHeight: hp(80),
-    shadowColor: colors.black,
-    shadowOffset: {
-      width: 0,
-      height: 4,
+    headerContent: {
+      alignItems: 'center',
+      paddingHorizontal: wp(6),
     },
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: wp(6),
-    borderBottomWidth: 1,
-    borderBottomColor: colors.lightGray,
-  },
-  modalDateContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.lightGray,
-    paddingHorizontal: wp(4),
-    paddingVertical: hp(1),
-    borderRadius: wp(4),
-  },
-  modalDateIcon: {
-    width: wp(4),
-    height: wp(4),
-    marginRight: wp(2),
-  },
-  modalDate: {
-    fontSize: fontSize(14),
-    color: colors.black,
-    fontFamily: fonts.regular,
-  },
-  closeButton: {
-    width: wp(10),
-    height: wp(10),
-    borderRadius: wp(5),
-    backgroundColor: colors.lightGray,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  closeIcon: {
-    width: wp(5),
-    height: wp(5),
-  },
-  modalScrollContent: {
-    padding: wp(6),
-  },
-  modalPrompt: {
-    fontSize: fontSize(24),
-    color: colors.black,
-    fontFamily: fonts.bold,
-    marginBottom: hp(3),
-    lineHeight: hp(3.2),
-  },
-  modalResponse: {
-    fontSize: fontSize(18),
-    color: colors.black,
-    opacity: 0.9,
-    fontFamily: fonts.regular,
-    marginBottom: hp(4),
-    lineHeight: hp(2.8),
-  },
-  recordingPlayer: {
-    backgroundColor: colors.lightGray,
-    borderRadius: wp(6),
-    padding: wp(6),
-    marginBottom: hp(2),
-    shadowColor: colors.black,
-    shadowOffset: {
-      width: 0,
-      height: 2,
+    headerIcon: {
+      width: wp(12),
+      height: wp(12),
+      marginBottom: hp(2),
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  recordingHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: hp(2),
-  },
-  recordingIcon: {
-    width: wp(5),
-    height: wp(5),
-    marginRight: wp(3),
-    tintColor: colors.gold,
-  },
-  recordingTitle: {
-    fontSize: fontSize(16),
-    color: colors.black,
-    fontFamily: fonts.bold,
-  },
-  recordingControls: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  playButton: {
-    width: wp(12),
-    height: wp(12),
-    borderRadius: wp(7),
-    backgroundColor: colors.gold,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: wp(4),
-    shadowColor: colors.black,
-    shadowOffset: {
-      width: 0,
-      height: 2,
+    title: {
+      fontSize: fontSize(32),
+      fontFamily: fonts.black,
+      color: colors.black,
+      marginBottom: hp(1),
     },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  playIcon: {
-    width: wp(5.33),
-    height: wp(5.33),
-  },
-  recordingInfo: {
-    flex: 1,
-  },
-  recordingDuration: {
-    fontSize: fontSize(14),
-    color: colors.black,
-    fontFamily: fonts.regular,
-    marginBottom: hp(1),
-  },
-  progressBar: {
-    height: hp(0.6),
-    backgroundColor: colors.sand,
-    borderRadius: wp(0.3),
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: colors.gold,
-  },
-  deleteButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: wp(4),
-    backgroundColor: colors.lightGray,
-    borderRadius: wp(4),
-    marginTop: hp(2),
-    marginHorizontal: wp(6),
-  },
-  deleteIcon: {
-    width: wp(5),
-    height: wp(5),
-    marginRight: wp(2),
-  },
-  deleteButtonText: {
-    color: colors.black,
-    fontSize: fontSize(16),
-    fontFamily: fonts.bold,
-  },
-  recordingIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-});
+    subtitle: {
+      fontSize: fontSize(16),
+      fontFamily: fonts.regular,
+      color: colors.black,
+      opacity: 0.7,
+      textAlign: 'center',
+    },
+    searchContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      margin: hp(2),
+      paddingHorizontal: wp(4),
+      height: hp(6),
+      backgroundColor: colors.lightGray,
+      borderRadius: wp(4),
+      shadowColor: colors.black,
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 3,
+    },
+    searchIcon: {
+      width: wp(5),
+      height: wp(5),
+      marginRight: wp(3),
+    },
+    searchInput: {
+      flex: 1,
+      fontSize: fontSize(16),
+      color: colors.black,
+      fontFamily: fonts.regular,
+    },
+    listContainer: {
+      padding: wp(5),
+    },
+    entryCard: {
+      backgroundColor: colors.white,
+      padding: wp(5),
+      borderRadius: wp(4),
+      marginBottom: hp(2),
+      shadowColor: colors.black,
+      shadowOffset: {
+        width: 0,
+        height: 4,
+      },
+      shadowOpacity: 0.1,
+      shadowRadius: 8,
+      elevation: 5,
+    },
+    entryHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: hp(1.5),
+    },
+    dateContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    dateIcon: {
+      width: wp(4),
+      height: wp(4),
+      marginRight: wp(2),
+    },
+    dateText: {
+      fontSize: fontSize(14),
+      color: colors.sand,
+      fontFamily: fonts.regular,
+    },
+    promptText: {
+      fontSize: fontSize(18),
+      color: colors.black,
+      marginBottom: hp(1.5),
+      fontFamily: fonts.bold,
+      lineHeight: hp(2.5),
+    },
+    responseText: {
+      fontSize: fontSize(16),
+      color: colors.black,
+      opacity: 0.8,
+      fontFamily: fonts.regular,
+      lineHeight: hp(2.3),
+    },
+    emptyState: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: wp(6),
+      marginTop: hp(10),
+    },
+    emptyStateIcon: {
+      width: wp(24),
+      height: wp(24),
+      marginBottom: hp(4),
+      opacity: 0.5,
+    },
+    emptyStateTitle: {
+      fontSize: fontSize(24),
+      fontFamily: fonts.bold,
+      color: colors.black,
+      marginBottom: hp(2),
+    },
+    emptyStateText: {
+      fontSize: fontSize(16),
+      fontFamily: fonts.regular,
+      color: colors.black,
+      textAlign: 'center',
+      opacity: 0.7,
+      lineHeight: hp(2.5),
+    },
+    modalContainer: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.6)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: wp(5),
+    },
+    modalContent: {
+      backgroundColor: colors.white,
+      borderRadius: wp(6),
+      width: '100%',
+      maxWidth: wp(90),
+      maxHeight: hp(80),
+      shadowColor: colors.black,
+      shadowOffset: {
+        width: 0,
+        height: 4,
+      },
+      shadowOpacity: 0.2,
+      shadowRadius: 12,
+      elevation: 8,
+    },
+    modalHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: wp(6),
+      borderBottomWidth: 1,
+      borderBottomColor: colors.lightGray,
+    },
+    modalDateContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.lightGray,
+      paddingHorizontal: wp(4),
+      paddingVertical: hp(1),
+      borderRadius: wp(4),
+    },
+    modalDateIcon: {
+      width: wp(4),
+      height: wp(4),
+      marginRight: wp(2),
+    },
+    modalDate: {
+      fontSize: fontSize(14),
+      color: colors.black,
+      fontFamily: fonts.regular,
+    },
+    closeButton: {
+      width: wp(10),
+      height: wp(10),
+      borderRadius: wp(5),
+      backgroundColor: colors.lightGray,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    closeIcon: {
+      width: wp(5),
+      height: wp(5),
+    },
+    modalScrollContent: {
+      padding: wp(6),
+    },
+    modalPrompt: {
+      fontSize: fontSize(24),
+      color: colors.black,
+      fontFamily: fonts.bold,
+      marginBottom: hp(3),
+      lineHeight: hp(3.2),
+    },
+    modalResponse: {
+      fontSize: fontSize(18),
+      color: colors.black,
+      opacity: 0.9,
+      fontFamily: fonts.regular,
+      marginBottom: hp(4),
+      lineHeight: hp(2.8),
+    },
+    recordingPlayer: {
+      backgroundColor: colors.lightGray,
+      borderRadius: wp(6),
+      padding: wp(6),
+      marginBottom: hp(2),
+      shadowColor: colors.black,
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 3,
+    },
+    recordingHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: hp(2),
+    },
+    recordingIcon: {
+      width: wp(5),
+      height: wp(5),
+      marginRight: wp(3),
+      tintColor: colors.gold,
+    },
+    recordingTitle: {
+      fontSize: fontSize(16),
+      color: colors.black,
+      fontFamily: fonts.bold,
+    },
+    recordingControls: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    playButton: {
+      width: wp(12),
+      height: wp(12),
+      borderRadius: wp(7),
+      backgroundColor: colors.gold,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: wp(4),
+      shadowColor: colors.black,
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.2,
+      shadowRadius: 4,
+      elevation: 4,
+    },
+    playIcon: {
+      width: wp(5.33),
+      height: wp(5.33),
+    },
+    recordingInfo: {
+      flex: 1,
+    },
+    recordingDuration: {
+      fontSize: fontSize(14),
+      color: colors.black,
+      fontFamily: fonts.regular,
+      marginBottom: hp(1),
+    },
+    progressBar: {
+      height: hp(0.6),
+      backgroundColor: colors.sand,
+      borderRadius: wp(0.3),
+      overflow: 'hidden',
+    },
+    progressFill: {
+      height: '100%',
+      backgroundColor: colors.gold,
+    },
+    deleteButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: wp(4),
+      backgroundColor: colors.lightGray,
+      borderRadius: wp(4),
+      marginTop: hp(2),
+      marginHorizontal: wp(6),
+    },
+    deleteIcon: {
+      width: wp(5),
+      height: wp(5),
+      marginRight: wp(2),
+    },
+    deleteButtonText: {
+      color: colors.black,
+      fontSize: fontSize(16),
+      fontFamily: fonts.bold,
+    },
+    recordingIndicator: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+  });
 
 export default memo(JournalScreen);

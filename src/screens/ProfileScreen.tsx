@@ -15,7 +15,7 @@ import {useNavigation} from '@react-navigation/native';
 import {useDispatch, useSelector} from 'react-redux';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {fontSize, hp, wp} from '../helpers/globalFunction';
-import {colors} from '../constant/colors';
+import {useColors} from '../constant/colors';
 import {fonts} from '../constant/fonts';
 import {icons} from '../constant/icons';
 import {RootState} from '../store';
@@ -47,6 +47,8 @@ const ProfileScreen = () => {
   const [isLoading, setIsLoading] = useState(true);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
+  const colors = useColors();
+  const styles = createStyles(colors);
 
   const profile = useSelector(
     (state: RootState) => state.profile.currentProfile,
@@ -238,178 +240,179 @@ const ProfileScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.white,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors.white,
-  },
-  header: {
-    paddingTop: Platform.OS === 'ios' ? hp(6) : STATUS_BAR_HEIGHT + hp(2),
-    paddingBottom: hp(2),
-    backgroundColor: colors.white,
-  },
-  headerContent: {
-    paddingHorizontal: wp(5),
-  },
-  headerTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: hp(1),
-  },
-  title: {
-    fontSize: fontSize(32),
-    fontFamily: fonts.black,
-    color: colors.black,
-    width: wp(80),
-  },
-  settingsButton: {
-    padding: wp(2),
-  },
-  settingsIcon: {
-    width: wp(6),
-    height: wp(6),
-  },
-  lastUpdatedContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  calendarIcon: {
-    width: wp(4),
-    height: wp(4),
-    marginRight: wp(2),
-  },
-  lastUpdated: {
-    fontSize: fontSize(14),
-    fontFamily: fonts.regular,
-    color: colors.sand,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: wp(5),
-    paddingBottom: hp(4),
-  },
-  summaryCard: {
-    backgroundColor: colors.gold,
-    borderRadius: wp(4),
-    padding: wp(5),
-    marginBottom: hp(3),
-    shadowColor: colors.black,
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  summaryHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: hp(2),
-  },
-  summaryIcon: {
-    width: wp(6),
-    height: wp(6),
-    marginRight: wp(3),
-  },
-  summaryTitle: {
-    fontSize: fontSize(20),
-    fontFamily: fonts.bold,
-    color: colors.black,
-  },
-  summaryText: {
-    fontSize: fontSize(16),
-    fontFamily: fonts.regular,
-    color: colors.black,
-    lineHeight: hp(2.6),
-  },
-  traitsContainer: {
-    backgroundColor: colors.white,
-    borderRadius: wp(4),
-    padding: wp(5),
-    marginBottom: hp(3),
-    shadowColor: colors.black,
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  traitsHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: hp(2),
-  },
-  traitsIcon: {
-    width: wp(6),
-    height: wp(6),
-    marginRight: wp(3),
-  },
-  traitsTitle: {
-    fontSize: fontSize(20),
-    fontFamily: fonts.bold,
-    color: colors.black,
-  },
-  traitsList: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginHorizontal: -wp(1),
-  },
-  traitBadge: {
-    backgroundColor: colors.lightGray,
-    paddingVertical: hp(1),
-    paddingHorizontal: wp(3),
-    borderRadius: wp(4),
-    margin: wp(1),
-  },
-  traitText: {
-    fontSize: fontSize(14),
-    fontFamily: fonts.regular,
-    color: colors.black,
-  },
-  regenerateButton: {
-    backgroundColor: colors.black,
-    borderRadius: wp(4),
-    padding: wp(5),
-    marginTop: hp(2),
-  },
-  regenerateButtonDisabled: {
-    opacity: 0.7,
-  },
-  regenerateButtonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  upgradeIcon: {
-    width: wp(5),
-    height: wp(5),
-    marginRight: wp(2),
-  },
-  regenerateButtonText: {
-    fontSize: fontSize(16),
-    fontFamily: fonts.bold,
-    color: colors.white,
-  },
-  premiumBadge: {
-    position: 'absolute',
-    top: -hp(1),
-    right: -wp(2),
-    backgroundColor: colors.gold,
-    paddingVertical: hp(0.5),
-    paddingHorizontal: wp(2),
-    borderRadius: wp(2),
-  },
-  premiumBadgeText: {
-    fontSize: fontSize(12),
-    fontFamily: fonts.bold,
-    color: colors.black,
-  },
-});
+const createStyles = colors =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.white,
+    },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: colors.white,
+    },
+    header: {
+      paddingTop: Platform.OS === 'ios' ? hp(6) : STATUS_BAR_HEIGHT + hp(2),
+      paddingBottom: hp(2),
+      backgroundColor: colors.white,
+    },
+    headerContent: {
+      paddingHorizontal: wp(5),
+    },
+    headerTop: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: hp(1),
+    },
+    title: {
+      fontSize: fontSize(32),
+      fontFamily: fonts.black,
+      color: colors.black,
+      width: wp(80),
+    },
+    settingsButton: {
+      padding: wp(2),
+    },
+    settingsIcon: {
+      width: wp(6),
+      height: wp(6),
+    },
+    lastUpdatedContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    calendarIcon: {
+      width: wp(4),
+      height: wp(4),
+      marginRight: wp(2),
+    },
+    lastUpdated: {
+      fontSize: fontSize(14),
+      fontFamily: fonts.regular,
+      color: colors.sand,
+    },
+    scrollView: {
+      flex: 1,
+    },
+    scrollContent: {
+      paddingHorizontal: wp(5),
+      paddingBottom: hp(4),
+    },
+    summaryCard: {
+      backgroundColor: colors.gold,
+      borderRadius: wp(4),
+      padding: wp(5),
+      marginBottom: hp(3),
+      shadowColor: colors.black,
+      shadowOffset: {width: 0, height: 4},
+      shadowOpacity: 0.15,
+      shadowRadius: 8,
+      elevation: 5,
+    },
+    summaryHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: hp(2),
+    },
+    summaryIcon: {
+      width: wp(6),
+      height: wp(6),
+      marginRight: wp(3),
+    },
+    summaryTitle: {
+      fontSize: fontSize(20),
+      fontFamily: fonts.bold,
+      color: colors.black,
+    },
+    summaryText: {
+      fontSize: fontSize(16),
+      fontFamily: fonts.regular,
+      color: colors.black,
+      lineHeight: hp(2.6),
+    },
+    traitsContainer: {
+      backgroundColor: colors.white,
+      borderRadius: wp(4),
+      padding: wp(5),
+      marginBottom: hp(3),
+      shadowColor: colors.black,
+      shadowOffset: {width: 0, height: 2},
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 3,
+    },
+    traitsHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: hp(2),
+    },
+    traitsIcon: {
+      width: wp(6),
+      height: wp(6),
+      marginRight: wp(3),
+    },
+    traitsTitle: {
+      fontSize: fontSize(20),
+      fontFamily: fonts.bold,
+      color: colors.black,
+    },
+    traitsList: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      marginHorizontal: -wp(1),
+    },
+    traitBadge: {
+      backgroundColor: colors.lightGray,
+      paddingVertical: hp(1),
+      paddingHorizontal: wp(3),
+      borderRadius: wp(4),
+      margin: wp(1),
+    },
+    traitText: {
+      fontSize: fontSize(14),
+      fontFamily: fonts.regular,
+      color: colors.black,
+    },
+    regenerateButton: {
+      backgroundColor: colors.black,
+      borderRadius: wp(4),
+      padding: wp(5),
+      marginTop: hp(2),
+    },
+    regenerateButtonDisabled: {
+      opacity: 0.7,
+    },
+    regenerateButtonContent: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    upgradeIcon: {
+      width: wp(5),
+      height: wp(5),
+      marginRight: wp(2),
+    },
+    regenerateButtonText: {
+      fontSize: fontSize(16),
+      fontFamily: fonts.bold,
+      color: colors.white,
+    },
+    premiumBadge: {
+      position: 'absolute',
+      top: -hp(1),
+      right: -wp(2),
+      backgroundColor: colors.gold,
+      paddingVertical: hp(0.5),
+      paddingHorizontal: wp(2),
+      borderRadius: wp(2),
+    },
+    premiumBadgeText: {
+      fontSize: fontSize(12),
+      fontFamily: fonts.bold,
+      color: colors.black,
+    },
+  });
 
 export default ProfileScreen;
