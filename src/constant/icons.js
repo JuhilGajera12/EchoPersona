@@ -20,4 +20,6 @@ export const icons = {
   warning: require('../../assets/images/warning.png'),
   google: require('../../assets/images/google.png'),
   facebook: require('../../assets/images/facebook.png'),
+  play: require('../../assets/images/play.png'),
+  pause: require('../../assets/images/pause.png'),
 };

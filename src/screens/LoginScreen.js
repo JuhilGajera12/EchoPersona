@@ -28,7 +28,7 @@ import {
   loginWithGoogle,
   clearError,
 } from '../store/slices/authSlice';
-import {AccessToken, LoginManager, Settings} from 'react-native-fbsdk-next';
+import {AccessToken, LoginManager} from 'react-native-fbsdk-next';
 import {
   FacebookAuthProvider,
   getAuth,
@@ -79,8 +79,7 @@ const LoginScreen = () => {
   const handleGoogleLogin = async () => {
     try {
       setIsGoogleLoading(true);
-      await dispatch(loginWithGoogle());
-      // Navigation will be handled automatically by AuthNavigator
+      dispatch(loginWithGoogle());
     } catch (err) {
       console.error('Google login error:', err);
     } finally {
@@ -129,8 +128,7 @@ const LoginScreen = () => {
 
     try {
       setIsEmailLoading(true);
-      await dispatch(loginWithEmail({email, password}));
-      // Navigation will be handled automatically by AuthNavigator
+      dispatch(loginWithEmail({email, password}));
     } catch (err) {
       console.error('Email login error:', err);
     } finally {

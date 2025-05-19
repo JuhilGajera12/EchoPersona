@@ -53,11 +53,11 @@ export const store = configureStore({
     getDefaultMiddleware({
       serializableCheck: {
         ignoredActions: [
-          FLUSH, 
-          REHYDRATE, 
-          PAUSE, 
-          PERSIST, 
-          PURGE, 
+          FLUSH,
+          REHYDRATE,
+          PAUSE,
+          PERSIST,
+          PURGE,
           REGISTER,
           'auth/loginWithGoogle/pending',
           'auth/loginWithGoogle/fulfilled',
@@ -72,7 +72,6 @@ export const store = configureStore({
           'auth/logout/fulfilled',
           'auth/logout/rejected',
         ],
-        // Ignore Firebase user objects in Redux state
         ignoredPaths: ['auth.user'],
       },
     }),

@@ -9,7 +9,6 @@ import {
   Image,
   Platform,
   StatusBar,
-  Alert,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {RootState, AppDispatch} from '../store';
@@ -64,7 +63,9 @@ const SettingsScreen = () => {
           dispatch(clearSubscription());
           dispatch(clearPromptHistory());
         } catch (error: any) {
-          throw new Error(error.message || 'Failed to logout. Please try again.');
+          throw new Error(
+            error.message || 'Failed to logout. Please try again.',
+          );
         }
       },
     });
@@ -75,7 +76,8 @@ const SettingsScreen = () => {
       setModalConfig({
         visible: true,
         title: 'Not Available',
-        message: 'Account deletion is not available for Facebook accounts. Please contact support if you need assistance.',
+        message:
+          'Account deletion is not available for Facebook accounts. Please contact support if you need assistance.',
         confirmText: 'OK',
         onConfirm: async () => {
           setModalConfig(prev => ({...prev, visible: false}));
@@ -87,7 +89,8 @@ const SettingsScreen = () => {
     setModalConfig({
       visible: true,
       title: 'Delete Account',
-      message: 'Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently lost.',
+      message:
+        'Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently lost.',
       confirmText: 'Delete',
       isDanger: true,
       onConfirm: async () => {
@@ -98,7 +101,9 @@ const SettingsScreen = () => {
           dispatch(clearSubscription());
           dispatch(clearPromptHistory());
         } catch (error: any) {
-          throw new Error(error.message || 'Failed to delete account. Please try again.');
+          throw new Error(
+            error.message || 'Failed to delete account. Please try again.',
+          );
         }
       },
     });
@@ -381,7 +386,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.regular,
     color: colors.error,
     marginTop: hp(1),
-    marginLeft: wp(14), // Align with the setting item text
+    marginLeft: wp(14),
   },
 });
 

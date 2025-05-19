@@ -4,6 +4,8 @@ interface JournalEntry {
   prompt: string;
   response: string;
   timestamp: string;
+  recordingUri?: string;
+  recordingDuration?: number;
 }
 
 export interface JournalState {

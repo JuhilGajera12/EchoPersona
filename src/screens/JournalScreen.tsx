@@ -10,8 +10,8 @@ import {
   Image,
   StatusBar,
   Platform,
-  Dimensions,
   Animated,
+  ScrollView,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {colors} from '../constant/colors';
@@ -20,8 +20,8 @@ import {fonts} from '../constant/fonts';
 import {icons} from '../constant/icons';
 import {RootState} from '../store';
 import {deleteEntry} from '../store/slices/journalSlice';
+import AudioRecorderPlayer from 'react-native-audio-recorder-player';
 
-const {width} = Dimensions.get('window');
 const STATUS_BAR_HEIGHT =
   Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0;
 
@@ -29,6 +29,8 @@ interface JournalEntry {
   prompt: string;
   response: string;
   timestamp: string;
+  recordingUri?: string;
+  recordingDuration?: number;
 }
 
 const JournalEntryCard = memo(
@@ -57,6 +59,16 @@ const JournalEntryCard = memo(
             />
             <Text style={styles.dateText}>{formatDate(item.timestamp)}</Text>
           </View>
+          {item.recordingUri && (
+            <View style={styles.recordingIndicator}>
+              <Image
+                source={icons.voice}
+                style={styles.recordingIcon}
+                tintColor={colors.gold}
+                resizeMode="contain"
+              />
+            </View>
+          )}
         </View>
         <Text style={styles.promptText} numberOfLines={2}>
           {item.prompt}
@@ -74,8 +86,12 @@ const JournalScreen = () => {
   const [selectedEntry, setSelectedEntry] = useState<JournalEntry | null>(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentPosition, setCurrentPosition] = useState(0);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
+  const audioRecorderPlayer = useRef(new AudioRecorderPlayer()).current;
+  const isListener = useRef<any | null>(null);
 
   const entries = useSelector((state: RootState) => state.journal.entries);
 
@@ -92,7 +108,56 @@ const JournalScreen = () => {
         useNativeDriver: true,
       }),
     ]).start();
+
+    return () => {
+      if (isListener.current) {
+        audioRecorderPlayer.removePlayBackListener();
+        isListener.current = null;
+      }
+      if (isPlaying) {
+        audioRecorderPlayer.stopPlayer();
+      }
+    };
   }, [fadeAnim, slideAnim]);
+
+  const handlePlayRecording = async (recordingUri: string) => {
+    try {
+      if (isPlaying) {
+        await audioRecorderPlayer.stopPlayer();
+        setIsPlaying(false);
+        if (isListener.current) {
+          audioRecorderPlayer.removePlayBackListener();
+          isListener.current = null;
+        }
+        return;
+      }
+
+      await audioRecorderPlayer.startPlayer(recordingUri);
+      setIsPlaying(true);
+      setCurrentPosition(0);
+
+      isListener.current = audioRecorderPlayer.addPlayBackListener(e => {
+        if (e.currentPosition === e.duration) {
+          audioRecorderPlayer.stopPlayer();
+          setIsPlaying(false);
+          setCurrentPosition(0);
+          audioRecorderPlayer.removePlayBackListener();
+          isListener.current = null;
+        }
+        setCurrentPosition(e.currentPosition);
+      });
+    } catch (err) {
+      setIsPlaying(false);
+      setCurrentPosition(0);
+    }
+  };
+
+  const formatDuration = (ms: number) => {
+    const totalSeconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
 
   const handleDeleteEntry = useCallback(
     (timestamp: string) => {
@@ -174,12 +239,6 @@ const JournalScreen = () => {
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.emptyState}>
-            {/* <Image
-              source={icons.journal}
-              style={styles.emptyStateIcon}
-              tintColor={colors.gold}
-              resizeMode="contain"
-            /> */}
             <Text style={styles.emptyStateTitle}>No Entries Yet</Text>
             <Text style={styles.emptyStateText}>
               Your journal entries will appear here as you reflect on daily
@@ -191,9 +250,15 @@ const JournalScreen = () => {
 
       <Modal
         visible={isModalVisible}
-        animationType="slide"
+        animationType="fade"
         transparent={true}
-        onRequestClose={() => setIsModalVisible(false)}>
+        onRequestClose={() => {
+          if (isPlaying) {
+            audioRecorderPlayer.stopPlayer();
+            setIsPlaying(false);
+          }
+          setIsModalVisible(false);
+        }}>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             {selectedEntry && (
@@ -219,7 +284,13 @@ const JournalScreen = () => {
                   </View>
                   <TouchableOpacity
                     style={styles.closeButton}
-                    onPress={() => setIsModalVisible(false)}>
+                    onPress={() => {
+                      if (isPlaying) {
+                        audioRecorderPlayer.stopPlayer();
+                        setIsPlaying(false);
+                      }
+                      setIsModalVisible(false);
+                    }}>
                     <Image
                       source={icons.close}
                       style={styles.closeIcon}
@@ -228,21 +299,77 @@ const JournalScreen = () => {
                     />
                   </TouchableOpacity>
                 </View>
-                <Text style={styles.modalPrompt}>{selectedEntry.prompt}</Text>
-                <Text style={styles.modalResponse}>
-                  {selectedEntry.response}
-                </Text>
-                <TouchableOpacity
-                  style={styles.deleteButton}
-                  onPress={() => handleDeleteEntry(selectedEntry.timestamp)}>
-                  <Image
-                    source={icons.delete}
-                    resizeMode="contain"
-                    style={styles.deleteIcon}
-                    tintColor={colors.black}
-                  />
-                  <Text style={styles.deleteButtonText}>Delete Entry</Text>
-                </TouchableOpacity>
+
+                <ScrollView
+                  style={styles.modalScrollContent}
+                  showsVerticalScrollIndicator={false}
+                  bounces={false}>
+                  <Text style={styles.modalPrompt}>{selectedEntry.prompt}</Text>
+                  <Text style={styles.modalResponse}>
+                    {selectedEntry.response}
+                  </Text>
+
+                  {selectedEntry.recordingUri && (
+                    <View style={styles.recordingPlayer}>
+                      <View style={styles.recordingHeader}>
+                        <Image
+                          source={icons.voice}
+                          style={styles.recordingIcon}
+                          resizeMode="contain"
+                        />
+                        <Text style={styles.recordingTitle}>
+                          Voice Recording
+                        </Text>
+                      </View>
+                      <View style={styles.recordingControls}>
+                        <TouchableOpacity
+                          style={styles.playButton}
+                          onPress={() =>
+                            handlePlayRecording(selectedEntry.recordingUri!)
+                          }
+                          activeOpacity={0.8}>
+                          <Image
+                            source={isPlaying ? icons.pause : icons.play}
+                            style={styles.playIcon}
+                            tintColor={colors.white}
+                            resizeMode="contain"
+                          />
+                        </TouchableOpacity>
+                        <View style={styles.recordingInfo}>
+                          <Text style={styles.recordingDuration}>
+                            {formatDuration(currentPosition)}
+                          </Text>
+                          <View style={styles.progressBar}>
+                            <View
+                              style={[
+                                styles.progressFill,
+                                {
+                                  width: `${
+                                    (currentPosition /
+                                      (selectedEntry.recordingDuration || 0)) *
+                                    100
+                                  }%`,
+                                },
+                              ]}
+                            />
+                          </View>
+                        </View>
+                      </View>
+                    </View>
+                  )}
+
+                  <TouchableOpacity
+                    style={styles.deleteButton}
+                    onPress={() => handleDeleteEntry(selectedEntry.timestamp)}>
+                    <Image
+                      source={icons.delete}
+                      resizeMode="contain"
+                      style={styles.deleteIcon}
+                      tintColor={colors.black}
+                    />
+                    <Text style={styles.deleteButtonText}>Delete Entry</Text>
+                  </TouchableOpacity>
+                </ScrollView>
               </>
             )}
           </View>
@@ -394,25 +521,41 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: wp(5),
   },
   modalContent: {
     backgroundColor: colors.white,
-    borderTopLeftRadius: wp(6),
-    borderTopRightRadius: wp(6),
-    padding: wp(6),
-    maxHeight: '90%',
+    borderRadius: wp(6),
+    width: '100%',
+    maxWidth: wp(90),
+    maxHeight: hp(80),
+    shadowColor: colors.black,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 8,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: hp(3),
+    padding: wp(6),
+    borderBottomWidth: 1,
+    borderBottomColor: colors.lightGray,
   },
   modalDateContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: colors.lightGray,
+    paddingHorizontal: wp(4),
+    paddingVertical: hp(1),
+    borderRadius: wp(4),
   },
   modalDateIcon: {
     width: wp(4),
@@ -420,31 +563,113 @@ const styles = StyleSheet.create({
     marginRight: wp(2),
   },
   modalDate: {
-    fontSize: fontSize(16),
-    color: colors.sand,
+    fontSize: fontSize(14),
+    color: colors.black,
     fontFamily: fonts.regular,
   },
   closeButton: {
-    padding: wp(2),
+    width: wp(10),
+    height: wp(10),
+    borderRadius: wp(5),
+    backgroundColor: colors.lightGray,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   closeIcon: {
     width: wp(5),
     height: wp(5),
   },
+  modalScrollContent: {
+    padding: wp(6),
+  },
   modalPrompt: {
-    fontSize: fontSize(22),
+    fontSize: fontSize(24),
     color: colors.black,
     fontFamily: fonts.bold,
     marginBottom: hp(3),
-    lineHeight: hp(3),
+    lineHeight: hp(3.2),
   },
   modalResponse: {
     fontSize: fontSize(18),
     color: colors.black,
-    opacity: 0.8,
+    opacity: 0.9,
     fontFamily: fonts.regular,
     marginBottom: hp(4),
     lineHeight: hp(2.8),
+  },
+  recordingPlayer: {
+    backgroundColor: colors.lightGray,
+    borderRadius: wp(6),
+    padding: wp(6),
+    marginBottom: hp(2),
+    shadowColor: colors.black,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  recordingHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: hp(2),
+  },
+  recordingIcon: {
+    width: wp(5),
+    height: wp(5),
+    marginRight: wp(3),
+    tintColor: colors.gold,
+  },
+  recordingTitle: {
+    fontSize: fontSize(16),
+    color: colors.black,
+    fontFamily: fonts.bold,
+  },
+  recordingControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  playButton: {
+    width: wp(12),
+    height: wp(12),
+    borderRadius: wp(7),
+    backgroundColor: colors.gold,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: wp(4),
+    shadowColor: colors.black,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  playIcon: {
+    width: wp(5.33),
+    height: wp(5.33),
+  },
+  recordingInfo: {
+    flex: 1,
+  },
+  recordingDuration: {
+    fontSize: fontSize(14),
+    color: colors.black,
+    fontFamily: fonts.regular,
+    marginBottom: hp(1),
+  },
+  progressBar: {
+    height: hp(0.6),
+    backgroundColor: colors.sand,
+    borderRadius: wp(0.3),
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: colors.gold,
   },
   deleteButton: {
     flexDirection: 'row',
@@ -452,8 +677,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: wp(4),
     backgroundColor: colors.lightGray,
-    borderRadius: wp(3),
+    borderRadius: wp(4),
     marginTop: hp(2),
+    marginHorizontal: wp(6),
   },
   deleteIcon: {
     width: wp(5),
@@ -464,6 +690,10 @@ const styles = StyleSheet.create({
     color: colors.black,
     fontSize: fontSize(16),
     fontFamily: fonts.bold,
+  },
+  recordingIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 });
 

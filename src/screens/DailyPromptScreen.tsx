@@ -1,11 +1,10 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Animated,
   KeyboardAvoidingView,
   Platform,
   Image,
@@ -20,6 +19,18 @@ import {icons} from '../constant/icons';
 import {RootState} from '../store';
 import {setCurrentPrompt} from '../store/slices/promptSlice';
 import {addEntry} from '../store/slices/journalSlice';
+import AudioRecorderPlayer from 'react-native-audio-recorder-player';
+import {PERMISSIONS, request, RESULTS} from 'react-native-permissions';
+import {StreakBadge} from '../components/common/StreakBadge';
+import {calculateStreaks} from '../utils/streakUtils';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
+  interpolate,
+  Extrapolate,
+} from 'react-native-reanimated';
 
 const SAMPLE_PROMPTS = [
   'What does growth mean to you today?',
@@ -35,28 +46,42 @@ const CARD_WIDTH = width - wp(10);
 const DailyPromptScreen = () => {
   const dispatch = useDispatch();
   const [response, setResponse] = useState('');
-  const [fadeAnim] = useState(new Animated.Value(0));
-  const [slideAnim] = useState(new Animated.Value(50));
+  const [isRecording, setIsRecording] = useState<boolean>(false);
+  const [recordingUri, setRecordingUri] = useState<string | null>(null);
+  const [recordingDuration, setRecordingDuration] = useState<number>(0);
+  const isListner = useRef<any | null>(null);
+  const audioRecorderPlayer = useRef(new AudioRecorderPlayer()).current;
+
+  const fadeAnim = useSharedValue(0);
+  const slideAnim = useSharedValue(50);
+  const streakAnim = useSharedValue(0);
+  const promptScale = useSharedValue(1);
 
   const currentPrompt = useSelector(
     (state: RootState) => state.prompt.currentPrompt,
   );
+  const journalEntries = useSelector(
+    (state: RootState) => state.journal.entries,
+  );
+
+  const {currentStreak, bestStreak} = calculateStreaks(journalEntries);
 
   useEffect(() => {
     loadPrompt();
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [fadeAnim, slideAnim]);
+    fadeAnim.value = withTiming(1, {duration: 800});
+    slideAnim.value = withSpring(0, {
+      damping: 15,
+      stiffness: 100,
+    });
+    streakAnim.value = withTiming(1, {duration: 1000});
+  }, []);
+
+  const promptCardStyle = useAnimatedStyle(() => {
+    return {
+      opacity: fadeAnim.value,
+      transform: [{translateY: slideAnim.value}, {scale: promptScale.value}],
+    };
+  });
 
   const loadPrompt = () => {
     if (!currentPrompt) {
@@ -67,20 +92,78 @@ const DailyPromptScreen = () => {
   };
 
   const handleSave = () => {
-    if (!response.trim() || !currentPrompt) return;
+    if (!response.trim() || !currentPrompt) {
+      return;
+    }
 
     const entry = {
       prompt: currentPrompt,
       response,
       timestamp: new Date().toISOString(),
+      recordingUri: recordingUri || undefined,
+      recordingDuration: recordingDuration || undefined,
     };
 
     dispatch(addEntry(entry));
 
+    streakAnim.value = 0;
+    streakAnim.value = withSpring(1, {
+      damping: 8,
+      stiffness: 100,
+    });
+
+    promptScale.value = withSpring(
+      1.05,
+      {
+        damping: 8,
+        stiffness: 100,
+      },
+      () => {
+        promptScale.value = withSpring(1, {
+          damping: 15,
+          stiffness: 100,
+        });
+      },
+    );
+
     setResponse('');
+    setRecordingUri(null);
+    setRecordingDuration(0);
     const randomPrompt =
       SAMPLE_PROMPTS[Math.floor(Math.random() * SAMPLE_PROMPTS.length)];
     dispatch(setCurrentPrompt(randomPrompt));
+  };
+
+  const handleVoiceRecord = async () => {
+    try {
+      const micStatus = await request(PERMISSIONS.ANDROID.RECORD_AUDIO);
+      if (micStatus !== RESULTS.GRANTED) {
+        return;
+      }
+
+      if (!isRecording) {
+        const result = await audioRecorderPlayer.startRecorder();
+        setIsRecording(true);
+        setRecordingUri(result);
+        setRecordingDuration(0);
+        isListner.current = audioRecorderPlayer.addRecordBackListener(e => {
+          setRecordingDuration(e.currentPosition);
+        });
+      } else {
+        await audioRecorderPlayer.stopRecorder();
+        audioRecorderPlayer.removeRecordBackListener();
+        isListner.current = null;
+        setIsRecording(false);
+      }
+    } catch (err) {
+      setIsRecording(false);
+      setRecordingUri(null);
+      setRecordingDuration(0);
+      if (isListner.current) {
+        audioRecorderPlayer.removeRecordBackListener();
+        isListner.current = null;
+      }
+    }
   };
 
   const handleSkip = () => {
@@ -94,20 +177,21 @@ const DailyPromptScreen = () => {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.white} />
-      
+
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Daily Reflection</Text>
-        <Text style={styles.headerSubtitle}>Take a moment to reflect on your journey</Text>
+        <Text style={styles.headerSubtitle}>
+          Take a moment to reflect on your journey
+        </Text>
       </View>
 
-      <Animated.View 
-        style={[
-          styles.promptCard,
-          {
-            opacity: fadeAnim,
-            transform: [{translateY: slideAnim}],
-          },
-        ]}>
+      <StreakBadge
+        currentStreak={currentStreak}
+        bestStreak={bestStreak}
+        animatedValue={streakAnim}
+      />
+
+      <Animated.View style={[styles.promptCard, promptCardStyle]}>
         <View style={styles.promptContent}>
           <View style={styles.promptIconContainer}>
             <Image
@@ -138,17 +222,29 @@ const DailyPromptScreen = () => {
       </View>
 
       <View style={styles.buttonContainer}>
-        <TouchableOpacity 
-          style={styles.skipButton} 
+        <TouchableOpacity
+          style={styles.skipButton}
           onPress={handleSkip}
           activeOpacity={0.8}>
+          <Text style={styles.skipButtonText}>Skip</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.recordVoiceButton,
+            isRecording && styles.recordingActiveButton,
+          ]}
+          onPress={handleVoiceRecord}
+          activeOpacity={0.8}>
           <Image
-            source={icons.add}
+            source={icons.voice}
             style={styles.skipIcon}
-            tintColor={colors.gold}
+            tintColor={colors.white}
             resizeMode="contain"
           />
-          <Text style={styles.skipButtonText}>Try Another</Text>
+          <Text style={styles.saveButtonText}>
+            {isRecording ? 'Stop Recording' : 'Record Voice'}
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -159,7 +255,7 @@ const DailyPromptScreen = () => {
           onPress={handleSave}
           disabled={!response.trim()}
           activeOpacity={0.8}>
-          <Text style={styles.saveButtonText}>Save Reflection</Text>
+          <Text style={styles.saveButtonText}>Save</Text>
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
@@ -172,7 +268,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
   },
   header: {
-    paddingTop: Platform.OS === 'ios' ? hp(6) : StatusBar.currentHeight + hp(2),
+    paddingTop:
+      Platform.OS === 'ios' ? hp(6) : (StatusBar.currentHeight ?? 0) + hp(2),
     paddingBottom: hp(2),
     paddingHorizontal: wp(5),
     backgroundColor: colors.white,
@@ -272,8 +369,8 @@ const styles = StyleSheet.create({
   skipButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: hp(1.5),
-    paddingHorizontal: wp(4),
+    paddingVertical: hp(1.8),
+    paddingHorizontal: wp(5),
     backgroundColor: colors.lightGray,
     borderRadius: wp(3),
     shadowColor: colors.black,
@@ -284,21 +381,42 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
+    justifyContent: 'center',
   },
   skipIcon: {
     width: wp(5),
     height: wp(5),
+    marginRight: wp(2),
   },
   skipButtonText: {
-    marginLeft: wp(2),
     color: colors.black,
     fontSize: fontSize(16),
     fontFamily: fonts.bold,
   },
+  recordVoiceButton: {
+    backgroundColor: colors.gold,
+    paddingVertical: hp(1.8),
+    paddingHorizontal: wp(5),
+    borderRadius: wp(3),
+    shadowColor: colors.black,
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  recordingActiveButton: {
+    backgroundColor: colors.error,
+  },
   saveButton: {
     backgroundColor: colors.black,
     paddingVertical: hp(1.8),
-    paddingHorizontal: wp(6),
+    paddingHorizontal: wp(5),
     borderRadius: wp(3),
     shadowColor: colors.black,
     shadowOffset: {

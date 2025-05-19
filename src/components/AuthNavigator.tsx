@@ -190,7 +190,6 @@ const AuthNavigator: React.FC = () => {
   useEffect(() => {
     const subscriber = auth().onAuthStateChanged(user => {
       if (user) {
-        // Serialize the user data before dispatching to Redux
         const serializedUser = {
           uid: user.uid,
           email: user.email,

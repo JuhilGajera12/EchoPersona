@@ -158,16 +158,12 @@ export const logout = createAsyncThunk(
       const state = getState() as RootState;
       const providerId = state.auth.user?.providerId;
 
-      // Handle Facebook logout
       if (providerId === 'facebook.com') {
-        await LoginManager.logOut();
-      }
-      // Handle Google logout
-      else if (providerId === 'google.com') {
+        LoginManager.logOut();
+      } else if (providerId === 'google.com') {
         await GoogleSignin.signOut();
       }
 
-      // Firebase logout
       await auth().signOut();
       return null;
     } catch (error: any) {
@@ -183,9 +179,10 @@ export const deleteAccount = createAsyncThunk(
       const state = getState() as RootState;
       const providerId = state.auth.user?.providerId;
 
-      // Don't allow account deletion for Facebook users
       if (providerId === 'facebook.com') {
-        return rejectWithValue('Account deletion is not available for Facebook accounts');
+        return rejectWithValue(
+          'Account deletion is not available for Facebook accounts',
+        );
       }
 
       const currentUser = auth().currentUser;
@@ -208,7 +205,6 @@ const authSlice = createSlice({
     },
     setUser: (state, action) => {
       if (action.payload) {
-        // Ensure we only store serializable data
         const user = action.payload;
         state.user = {
           uid: user.uid,
@@ -229,7 +225,6 @@ const authSlice = createSlice({
   },
   extraReducers: builder => {
     builder
-      // Login with email
       .addCase(loginWithEmail.pending, state => {
         state.isLoading = true;
         state.error = null;
@@ -244,7 +239,6 @@ const authSlice = createSlice({
         state.error = (action.payload as string) || 'Login failed';
       })
 
-      // Signup with email
       .addCase(signupWithEmail.pending, state => {
         state.isLoading = true;
         state.error = null;
@@ -259,7 +253,6 @@ const authSlice = createSlice({
         state.error = (action.payload as string) || 'Signup failed';
       })
 
-      // Google login
       .addCase(loginWithGoogle.pending, state => {
         state.isLoading = true;
         state.error = null;
@@ -274,7 +267,6 @@ const authSlice = createSlice({
         state.error = (action.payload as string) || 'Google login failed';
       })
 
-      // Logout
       .addCase(logout.pending, state => {
         state.isLoading = true;
       })
@@ -289,7 +281,6 @@ const authSlice = createSlice({
         state.error = (action.payload as string) || 'Logout failed';
       })
 
-      // Delete account
       .addCase(deleteAccount.pending, state => {
         state.isLoading = true;
       })
