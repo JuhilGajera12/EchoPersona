@@ -266,7 +266,7 @@ const AuthNavigator: React.FC = () => {
   );
 };
 
-const createStyles = colors =>
+const createStyles = (colors: any) =>
   StyleSheet.create({
     loadingContainer: {
       flex: 1,

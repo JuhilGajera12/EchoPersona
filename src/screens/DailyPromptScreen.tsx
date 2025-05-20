@@ -14,7 +14,7 @@ import {
 import {useDispatch, useSelector} from 'react-redux';
 import {fontSize, hp, wp} from '../helpers/globalFunction';
 import {fonts} from '../constant/fonts';
-import {useColors, Colors} from '../constant/colors';
+import {useColors} from '../constant/colors';
 import {icons} from '../constant/icons';
 import {RootState} from '../store';
 import {setCurrentPrompt} from '../store/slices/promptSlice';
@@ -74,6 +74,7 @@ const DailyPromptScreen = () => {
       stiffness: 100,
     });
     streakAnim.value = withTiming(1, {duration: 1000});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const promptCardStyle = useAnimatedStyle(() => {
@@ -262,7 +263,7 @@ const DailyPromptScreen = () => {
     </KeyboardAvoidingView>
   );
 };
-const createStyles = (colors: Colors) =>
+const createStyles = (colors: any) =>
   StyleSheet.create({
     container: {
       flex: 1,

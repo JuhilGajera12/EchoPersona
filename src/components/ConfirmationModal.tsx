@@ -92,7 +92,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   );
 };
 
-const createStyles = colors =>
+const createStyles = (colors: any) =>
   StyleSheet.create({
     modalOverlay: {
       flex: 1,

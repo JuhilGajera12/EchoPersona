@@ -400,7 +400,7 @@ const SignupScreen = () => {
     </SafeAreaView>
   );
 };
-const createStyles = colors =>
+const createStyles = (colors: any) =>
   StyleSheet.create({
     container: {
       flex: 1,

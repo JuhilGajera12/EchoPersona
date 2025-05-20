@@ -155,7 +155,7 @@ const TabNavigator = () => {
   );
 };
 
-const createStyles = colors =>
+const createStyles = (colors: any) =>
   StyleSheet.create({
     screenWrapper: {
       flex: 1,
