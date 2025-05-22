@@ -196,7 +196,9 @@ const PromptHistoryScreen = () => {
         type: 'application/octet-stream',
       });
     } catch (error) {
-      console.error('Sharing failed:');
+      if (error.message !== 'User did not share') {
+        console.error('Sharing failed:', error);
+      }
     }
   };
 

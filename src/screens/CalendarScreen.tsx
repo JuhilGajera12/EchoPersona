@@ -54,7 +54,10 @@ const CalendarScreen = () => {
 
   useEffect(() => {
     const data = getMarkedDates(entries);
-    setMarkedDates(data);
+    console.log('🚀 ~ useEffect ~ data:', data);
+    setTimeout(() => {
+      setMarkedDates(data);
+    }, 300);
   }, [entries]);
 
   return (

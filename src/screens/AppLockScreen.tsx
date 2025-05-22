@@ -183,7 +183,6 @@ const AppLockScreen = () => {
       const current = isSetup ? (isConfirming ? confirmPin : pin) : pin;
       if (current.length < PIN_LENGTH) {
         const newPin = current + digit;
-        console.log('🚀 ~ handlePinInput ~ newPin:', newPin);
         if (isSetup) {
           isConfirming ? setConfirmPin(newPin) : setPin(newPin);
           if (newPin.length === PIN_LENGTH && !isConfirming) {
