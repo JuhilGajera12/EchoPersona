@@ -11,7 +11,7 @@ import {
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {useSelector, useDispatch} from 'react-redux';
 import {RootState} from '../store';
-import {setUser} from '../store/slices/authSlice';
+import {setAppLock, setUser} from '../store/slices/authSlice';
 import Animated, {
   useAnimatedStyle,
   withSpring,
@@ -26,6 +26,9 @@ import {useColors} from '../constant/colors';
 import {icons} from '../constant/icons';
 import {hp, wp} from '../helpers/globalFunction';
 import auth from '@react-native-firebase/auth';
+import AppLockScreen from '../screens/AppLockScreen';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {APP_LOCK_KEY} from '../helpers';
 
 const TabStack = createNativeStackNavigator();
 
@@ -194,7 +197,9 @@ const MainTabs: React.FC = () => (
 const AuthNavigator: React.FC = () => {
   const [initializing, setInitializing] = useState(true);
   const dispatch = useDispatch();
-  const {isAuthenticated} = useSelector((state: RootState) => state.auth);
+  const {isAuthenticated, isAppLock} = useSelector(
+    (state: RootState) => state.auth,
+  );
   const {hasCompletedOnboarding} = useSelector(
     (state: RootState) => state.onboarding,
   );
@@ -226,6 +231,21 @@ const AuthNavigator: React.FC = () => {
     return subscriber;
   }, [dispatch, initializing]);
 
+  useEffect(() => {
+    const checkAppLock = async () => {
+      try {
+        const appLockEnabled = await AsyncStorage.getItem(APP_LOCK_KEY);
+        if (appLockEnabled === 'true') {
+          dispatch(setAppLock(true));
+        }
+      } catch (error) {
+        console.error('Failed to check app lock state:', error);
+      }
+    };
+
+    checkAppLock();
+  }, [isAppLock]);
+
   if (initializing) {
     return (
       <View style={styles.loadingContainer}>
@@ -238,7 +258,9 @@ const AuthNavigator: React.FC = () => {
     <TabStack.Navigator
       initialRouteName={
         isAuthenticated
-          ? hasCompletedOnboarding
+          ? isAppLock
+            ? 'AppLock'
+            : hasCompletedOnboarding
             ? 'MainTabs'
             : 'Onboarding'
           : 'Login'
@@ -246,6 +268,9 @@ const AuthNavigator: React.FC = () => {
       screenOptions={{headerShown: false}}>
       {isAuthenticated ? (
         <>
+          {isAppLock && (
+            <TabStack.Screen name="AppLock" component={AppLockScreen} />
+          )}
           {!hasCompletedOnboarding && (
             <TabStack.Screen name="Onboarding" component={OnboardingScreen} />
           )}

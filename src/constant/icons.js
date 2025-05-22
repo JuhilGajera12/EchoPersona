@@ -22,4 +22,5 @@ export const icons = {
   facebook: require('../../assets/images/facebook.png'),
   play: require('../../assets/images/play.png'),
   pause: require('../../assets/images/pause.png'),
+  share: require('../../assets/images/share.png'),
 };

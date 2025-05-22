@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Image,
   Platform,
   StatusBar,
+  Alert,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {RootState, AppDispatch} from '../store';
@@ -16,13 +17,17 @@ import {clearProfile} from '../store/slices/profileSlice';
 import {clearEntries} from '../store/slices/journalSlice';
 import {clearSubscription} from '../store/slices/premiumSlice';
 import {clearPromptHistory} from '../store/slices/promptSlice';
-import {logout, deleteAccount} from '../store/slices/authSlice';
+import {logout, deleteAccount, setAppLock} from '../store/slices/authSlice';
 import {useColors} from '../constant/colors';
 import {fonts} from '../constant/fonts';
 import {icons} from '../constant/icons';
-import {fontSize, hp, wp} from '../helpers/globalFunction';
+import {fontSize, hp, navigate, wp} from '../helpers/globalFunction';
 import ConfirmationModal from '../components/ConfirmationModal';
 import {setDarkMode} from '../store/slices/themeSlice';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {APP_LOCK_KEY, THEME_KEY} from '../helpers';
+import {isBiometricEnabled} from '../utils/secureStorage';
+import ReactNativeBiometrics from 'react-native-biometrics';
 
 const STATUS_BAR_HEIGHT =
   Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0;
@@ -30,6 +35,7 @@ const STATUS_BAR_HEIGHT =
 const SettingsScreen = () => {
   const dispatch = useDispatch<AppDispatch>();
   const isDarkMode = useSelector((state: RootState) => state.theme.isDarkMode);
+  const isAppLock = useSelector((state: RootState) => state.auth.isAppLock);
   const [modalConfig, setModalConfig] = useState<{
     visible: boolean;
     title: string;
@@ -51,6 +57,23 @@ const SettingsScreen = () => {
   const auth = useSelector((state: RootState) => state.auth);
   const isLoading = auth.isLoading;
   const isFacebookUser = auth.user?.providerId === 'facebook.com';
+  const [biometricEnabled, setBiometricEnabled] = useState(false);
+  const [hasBiometrics, setHasBiometrics] = useState(false);
+
+  useEffect(() => {
+    const checkBiometrics = async () => {
+      const rnBiometrics = new ReactNativeBiometrics();
+      const {available} = await rnBiometrics.isSensorAvailable();
+      setHasBiometrics(available);
+
+      if (available) {
+        const isEnabled = await isBiometricEnabled();
+        setBiometricEnabled(isEnabled);
+      }
+    };
+
+    checkBiometrics();
+  }, []);
 
   const handleLogout = () => {
     setModalConfig({
@@ -114,6 +137,92 @@ const SettingsScreen = () => {
 
   const handleExportData = () => {};
 
+  const handleToggleAppLock = async (isLock: boolean) => {
+    try {
+      if (isLock) {
+        dispatch(setAppLock(true));
+        await AsyncStorage.setItem(APP_LOCK_KEY, 'true');
+        navigate('AppLock', {isSetup: true});
+      } else {
+        const confirmDisable = await new Promise<boolean>(resolve => {
+          Alert.alert(
+            'Disable App Lock',
+            'Are you sure you want to disable app lock? This will remove your PIN and biometric settings.',
+            [
+              {
+                text: 'Cancel',
+                onPress: () => resolve(false),
+                style: 'cancel',
+              },
+              {
+                text: 'Disable',
+                onPress: () => resolve(true),
+                style: 'destructive',
+              },
+            ],
+          );
+        });
+
+        if (confirmDisable) {
+          dispatch(setAppLock(false));
+          await AsyncStorage.setItem(APP_LOCK_KEY, 'false');
+          await setBiometricEnabled(false);
+          setBiometricEnabled(false);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to toggle app lock:', error);
+      Alert.alert('Error', 'Failed to toggle app lock. Please try again.');
+      dispatch(setAppLock(!isLock));
+    }
+  };
+
+  const handleToggleBiometric = async (enabled: boolean) => {
+    try {
+      if (enabled) {
+        const rnBiometrics = new ReactNativeBiometrics();
+        const {success} = await rnBiometrics.simplePrompt({
+          promptMessage: 'Authenticate to enable biometric login',
+          cancelButtonText: 'Cancel',
+        });
+
+        if (success) {
+          await setBiometricEnabled(true);
+          setBiometricEnabled(true);
+        }
+      } else {
+        const confirmDisable = await new Promise<boolean>(resolve => {
+          Alert.alert(
+            'Disable Biometric Login',
+            'Are you sure you want to disable biometric login? You will need to use your PIN to unlock the app.',
+            [
+              {
+                text: 'Cancel',
+                onPress: () => resolve(false),
+                style: 'cancel',
+              },
+              {
+                text: 'Disable',
+                onPress: () => resolve(true),
+              },
+            ],
+          );
+        });
+
+        if (confirmDisable) {
+          await setBiometricEnabled(false);
+          setBiometricEnabled(false);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to toggle biometric:', error);
+      Alert.alert(
+        'Error',
+        'Failed to toggle biometric login. Please try again.',
+      );
+    }
+  };
+
   const renderSettingItem = (
     icon: any,
     title: string,
@@ -147,6 +256,11 @@ const SettingsScreen = () => {
     </TouchableOpacity>
   );
 
+  const onToggleTheme = async (isDark: boolean) => {
+    dispatch(setDarkMode(isDark));
+    await AsyncStorage.setItem(THEME_KEY, isDark ? 'dark' : 'light');
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.white} />
@@ -172,11 +286,43 @@ const SettingsScreen = () => {
             'Dark Mode',
             <Switch
               value={isDarkMode}
-              onValueChange={value => dispatch(setDarkMode(value))}
+              onValueChange={onToggleTheme}
               trackColor={{false: colors.lightGray, true: colors.gold}}
               thumbColor={colors.white}
             />,
           )}
+          {renderSettingItem(
+            icons.lock,
+            'App Lock',
+            <Switch
+              value={isAppLock}
+              onValueChange={handleToggleAppLock}
+              trackColor={{false: colors.lightGray, true: colors.gold}}
+              thumbColor={colors.white}
+              disabled={isLoading}
+            />,
+          )}
+          {isAppLock && hasBiometrics && (
+            <>
+              {renderSettingItem(
+                icons.lock,
+                'Biometric Login',
+                <Switch
+                  value={biometricEnabled}
+                  onValueChange={handleToggleBiometric}
+                  trackColor={{false: colors.lightGray, true: colors.gold}}
+                  thumbColor={colors.white}
+                  disabled={isLoading}
+                />,
+              )}
+              <Text style={styles.settingDescription}>
+                Use biometric authentication for faster access to the app
+              </Text>
+            </>
+          )}
+          <Text style={styles.settingDescription}>
+            Secure your app with PIN and optional biometric authentication
+          </Text>
         </View>
 
         <View style={styles.section}>
@@ -391,6 +537,14 @@ const createStyles = (colors: any) =>
       color: colors.error,
       marginTop: hp(1),
       marginLeft: wp(14),
+    },
+    settingDescription: {
+      fontFamily: fonts.regular,
+      fontSize: fontSize(12),
+      color: colors.sand,
+      marginTop: hp(-1),
+      marginBottom: hp(2),
+      marginLeft: wp(12),
     },
   });
 

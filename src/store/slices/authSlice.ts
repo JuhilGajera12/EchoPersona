@@ -2,7 +2,6 @@ import {createSlice, createAsyncThunk} from '@reduxjs/toolkit';
 import auth from '@react-native-firebase/auth';
 import {GoogleSignin} from '@react-native-google-signin/google-signin';
 import {LoginManager} from 'react-native-fbsdk-next';
-import {commonAction} from '../../helpers/globalFunction';
 import {RootState} from '../../store';
 
 export interface AuthState {
@@ -18,6 +17,7 @@ export interface AuthState {
   isLoading: boolean;
   error: string | null;
   isAuthenticated: boolean;
+  isAppLock: boolean;
 }
 
 const initialState: AuthState = {
@@ -25,6 +25,7 @@ const initialState: AuthState = {
   isLoading: false,
   error: null,
   isAuthenticated: false,
+  isAppLock: false,
 };
 
 export const loginWithEmail = createAsyncThunk(
@@ -222,6 +223,12 @@ const authSlice = createSlice({
       state.isLoading = false;
       state.error = null;
     },
+    setAppLock: (state, action) => {
+      state.isAppLock = action.payload;
+    },
+    toggleAppLock: state => {
+      state.isAppLock = !state.isAppLock;
+    },
   },
   extraReducers: builder => {
     builder
@@ -297,5 +304,6 @@ const authSlice = createSlice({
   },
 });
 
-export const {clearError, setUser} = authSlice.actions;
+export const {clearError, setUser, setAppLock, toggleAppLock} =
+  authSlice.actions;
 export default authSlice.reducer;
