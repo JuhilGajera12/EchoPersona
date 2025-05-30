@@ -375,7 +375,7 @@ const createStyles = colors =>
     title: {
       fontSize: fontSize(32),
       fontFamily: fonts.black,
-      color: colors.gold,
+      color: colors.black,
       marginBottom: hp(0.98),
       textAlign: 'center',
     },
